@@ -180,6 +180,7 @@
       <div class="controls">
         <label><input type="checkbox" id="opt-ann" checked> Show angles</label>
         <label><input type="checkbox" id="opt-swap"> Swap legs</label>
+        <label><input type="checkbox" id="opt-rev"> Flip swing direction</label>
       </div>
     </section>
 
@@ -201,6 +202,7 @@ right leg = middle finger (green). Knuckle bend = hip swing,
 middle-joint bend = knee, tip-joint bend = ankle.
 The lowest foot always rests on the bench; the body rises and
 sinks to keep it there. Lift one leg and it looks like a step.
+If the swing looks backwards to you, tick Flip swing direction.
 Arms swing against the opposite leg. The chest lamp shows state:
 green = live, amber = holding or easing back, grey = neutral.
 Foot position (fingertip offset) is in the pose data but is not
@@ -504,7 +506,7 @@ var FBMotion = (function () {
     returnTau: 0.25,       // then ease back to neutral with this time constant (s)
     blendMs: 400,          // fade-in when tracking starts, resumes, or recalibrates
     ranges: { hip: 50, knee: 70, ankle: 45, footX: 0.5, footY: 0.5 }, // input that maps to full scale
-    signs:  { hip: 1, knee: 1, ankle: 1, footX: 1, footY: 1 },        // flip a direction if it feels backwards
+    signs:  { hip: -1, knee: 1, ankle: 1, footX: 1, footY: 1 },       // flip a direction if it feels backwards (hip is -1: user-tested on a real hand)
     limits: { hip: { min: -40, max: 40 }, knee: { min: 0, max: 100 }, ankle: { min: -30, max: 30 } }
   };
 
@@ -771,8 +773,8 @@ function runMotionTests(M) {
     var m = M.createMapper(); calibrate(m);
     var hi = run(m, hand({ pip: 300, mcp: 300, dip: 300 }), 3, 1000), lo = run(m, hand({ pip: -300, mcp: -300, dip: -300 }), 3, hi.t);
     var L = M.DEFAULTS.limits, a = hi.pose.leftLeg, b = lo.pose.leftLeg;
-    return (approx(a.kneeRotation, L.knee.max, 1e-9) && approx(a.hipRotation, L.hip.max, 1e-9) && approx(a.ankleRotation, L.ankle.max, 1e-9) &&
-            approx(b.kneeRotation, L.knee.min, 1e-9) && approx(b.hipRotation, L.hip.min, 1e-9)) || [a, b];
+    return (approx(a.kneeRotation, L.knee.max, 1e-9) && approx(Math.abs(a.hipRotation), L.hip.max, 1e-9) && approx(a.ankleRotation, L.ankle.max, 1e-9) &&
+            approx(b.kneeRotation, L.knee.min, 1e-9) && approx(Math.abs(b.hipRotation), -L.hip.min, 1e-9)) || [a, b];
   });
   t('dead zone: 1 degree of jitter does nothing', function () {
     var m = M.createMapper(); calibrate(m);
@@ -796,6 +798,19 @@ function runMotionTests(M) {
     calibrate(m, hand({ pip: 80 }));
     var p = run(m, hand({ pip: 80 }), 2, r1.t).pose;
     return approx(p.leftLeg.kneeRotation, 0, 1e-9) || p.leftLeg;
+  });
+
+  t('hip direction: by default a curling knuckle swings the leg back; signs.hip = +1 swings it forward', function () {
+    var a = M.createMapper(), b = M.createMapper({ signs: { hip: 1 } }); calibrate(a); calibrate(b);
+    var pa = run(a, hand({ mcp: 50 }), 3, 1000).pose.leftLeg.hipRotation, pb = run(b, hand({ mcp: 50 }), 3, 1000).pose.leftLeg.hipRotation;
+    return (pa < -10 && pb > 10 && approx(pa, -pb, 1e-6)) || [pa, pb];
+  });
+  t('flipping the hip sign at runtime takes effect without recalibrating', function () {
+    var m = M.createMapper(); calibrate(m);
+    var r = run(m, hand({ mcp: 50 }), 2, 1000), before = r.pose.leftLeg.hipRotation;
+    m.setConfig({ signs: { hip: 1 } });
+    var after = run(m, hand({ mcp: 50 }), 3, r.t).pose.leftLeg.hipRotation;
+    return (before < -10 && after > 10) || [before, after];
   });
 
   // ---- Smoothing ----
@@ -1275,7 +1290,7 @@ var FB_MP_VERSION = '0.10.3';
   function $(id) { return document.getElementById(id); }
   var video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d'), stage = $('stage');
   var stageMsg = $('stage-msg'), msgEl = $('msg'), btn = $('btn-camera');
-  var optOverlay = $('opt-overlay'), optMirror = $('opt-mirror'), optSwap = $('opt-swap'), optAnn = $('opt-ann');
+  var optOverlay = $('opt-overlay'), optMirror = $('opt-mirror'), optSwap = $('opt-swap'), optAnn = $('opt-ann'), optRev = $('opt-rev');
   var banner = $('banner'), bannerText = $('banner-text'), btnRetry = $('btn-retry');
   var btnCal = $('btn-cal'), btnResetCal = $('btn-reset-cal'), calStatus = $('cal-status');
   var sens = $('sens'), smooth = $('smooth');
@@ -1529,10 +1544,11 @@ var FB_MP_VERSION = '0.10.3';
   function applySettings() {
     $('sens-val').textContent = Number(sens.value).toFixed(2) + 'x';
     $('smooth-val').textContent = Math.round(smooth.value * 100) + '%';
-    mapper.setConfig({ sensitivity: Number(sens.value), smoothing: Number(smooth.value), swapLegs: optSwap.checked });
+    mapper.setConfig({ sensitivity: Number(sens.value), smoothing: Number(smooth.value), swapLegs: optSwap.checked, signs: { hip: optRev.checked ? 1 : -1 } });
   }
   sens.addEventListener('input', applySettings); smooth.addEventListener('input', applySettings);
   optSwap.addEventListener('change', function () { applySettings(); renderPose(); });
+  optRev.addEventListener('change', applySettings);
 
   // ---------- Tracking loop (single loop, one inference per new camera frame) ----------
   function loop() {
