@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fingerbot Studio - Milestone 2.1</title>
+<title>Fingerbot Studio - Milestone 3</title>
 <style>
   :root {
     --bg: #0f1420; --panel: #171d2b; --line: #263049; --text: #e6ebf5; --dim: #8592ad;
@@ -18,34 +18,46 @@
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 12px; color: var(--dim); }
   .chip b { color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 600; margin-left: 4px; }
-  .chip b.ok { color: var(--green); } .chip b.warn { color: var(--amber); } .chip b.bad { color: var(--red); }
+  b.ok, .ok { color: var(--green) !important; } b.warn, .warn { color: var(--amber) !important; } b.bad, .bad { color: var(--red) !important; }
+  #banner { background: #3a1b22; border: 1px solid var(--red); color: #ffd3d3; border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.45; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; word-break: break-word; }
+  #banner[hidden] { display: none; }
   .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-  @media (min-width: 860px) { .grid { grid-template-columns: 1.15fr 1fr; } }
+  @media (min-width: 860px) { .grid { grid-template-columns: 1.1fr 1fr; } }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-  .panel h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+  .panel h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .panel h2 .chip { text-transform: none; letter-spacing: 0; }
   .stage { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #000; border-radius: 10px; overflow: hidden; }
   .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; }
   .stage.mirrored video, .stage.mirrored canvas { transform: scaleX(-1); }
   .stage canvas { pointer-events: none; }
   .stage-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--dim); font-size: 14px; }
-  .controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 12px; }
-  button { background: var(--blue); color: #06101f; border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px 14px; align-items: center; margin-top: 12px; }
+  button { background: var(--blue); color: #06101f; border: 0; border-radius: 8px; padding: 9px 16px; font-weight: 700; font-size: 14px; cursor: pointer; }
   button.stop { background: var(--red); }
-  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.secondary { background: #2a3550; color: var(--text); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
   label { font-size: 13px; color: var(--dim); display: flex; gap: 6px; align-items: center; cursor: pointer; }
   #msg { margin-top: 10px; font-size: 13px; color: var(--red); min-height: 1.2em; }
+  .tune { display: grid; grid-template-columns: 90px 1fr 48px; gap: 8px 10px; align-items: center; font-size: 13px; color: var(--dim); margin-top: 12px; }
+  .tune input[type=range] { width: 100%; }
+  .tune .v { color: var(--text); text-align: right; }
+  #cal-status { font-size: 13px; color: var(--dim); margin-top: 10px; min-height: 1.2em; }
   .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
   .card.idx { border-left: 4px solid var(--blue); } .card.mid { border-left: 4px solid var(--green); }
   .card h3 { margin: 0 0 8px; font-size: 14px; }
   .card.idx h3 { color: var(--blue); } .card.mid h3 { color: var(--green); }
   .row { display: grid; grid-template-columns: 42px 56px 56px 1fr; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
   .row.head { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
-  .row .k { color: var(--dim); }
+  .row2 { display: grid; grid-template-columns: 48px 56px 1fr; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
+  .k { color: var(--dim); }
   .v { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; }
   .v2 { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--dim); }
   .bar { height: 6px; background: #0c111b; border-radius: 3px; overflow: hidden; }
   .bar i { display: block; height: 100%; width: 0; background: currentColor; }
-  .card.idx .bar { color: var(--blue); } .card.mid .bar { color: var(--green); }
+  .bar2 { position: relative; height: 6px; background: #0c111b; border-radius: 3px; }
+  .bar2::after { content: ""; position: absolute; left: 50%; top: -2px; width: 1px; height: 10px; background: var(--line); }
+  .bar2 i { position: absolute; top: 0; height: 100%; width: 0; left: 50%; background: currentColor; border-radius: 3px; }
+  .card.idx .bar, .card.idx .bar2 { color: var(--blue); } .card.mid .bar, .card.mid .bar2 { color: var(--green); }
   .kv { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-top: 1px solid var(--line); margin-top: 4px; }
   .kv span:first-child { color: var(--dim); }
   details { font-size: 13px; color: var(--dim); }
@@ -60,7 +72,7 @@
   <header>
     <div>
       <h1>FINGERBOT STUDIO</h1>
-      <div class="sub">Milestone 2.1 &middot; Geometry &amp; telemetry</div>
+      <div class="sub">Milestone 3 &middot; Calibration &amp; motion mapping</div>
     </div>
     <div class="chips" role="status" aria-live="polite">
       <span class="chip">Camera<b id="c-camera">OFF</b></span>
@@ -72,6 +84,11 @@
     </div>
   </header>
 
+  <div id="banner" role="alert" hidden>
+    <span id="banner-text"></span>
+    <button id="btn-retry" class="secondary" type="button">Retry loading</button>
+  </div>
+
   <div class="grid">
     <section class="panel">
       <h2>Camera / hand</h2>
@@ -81,46 +98,72 @@
         <div class="stage-msg" id="stage-msg">Camera is off. Press Start camera. Video is processed in your browser and never uploaded.</div>
       </div>
       <div class="controls">
-        <button id="btn-camera">Start camera</button>
+        <button id="btn-camera" type="button">Start camera</button>
         <label><input type="checkbox" id="opt-overlay" checked> Landmark overlay</label>
         <label><input type="checkbox" id="opt-mirror" checked> Mirror view</label>
       </div>
       <div id="msg" role="alert"></div>
+
+      <h2 style="margin-top:14px">Calibration &amp; tuning</h2>
+      <div class="controls" style="margin-top:0">
+        <button id="btn-cal" type="button" disabled>Calibrate</button>
+        <button id="btn-reset-cal" class="secondary" type="button">Reset calibration</button>
+        <label><input type="checkbox" id="opt-swap"> Swap legs</label>
+      </div>
+      <div id="cal-status">Not calibrated. Hold your hand in a relaxed pose, then press Calibrate.</div>
+      <div class="tune">
+        <span>Sensitivity</span><input type="range" id="sens" min="0.5" max="2.5" step="0.05" value="1"><span class="v" id="sens-val">1.00x</span>
+        <span>Smoothing</span><input type="range" id="smooth" min="0" max="1" step="0.05" value="0.5"><span class="v" id="smooth-val">50%</span>
+      </div>
     </section>
 
     <section class="panel">
+      <h2>Robot pose <span class="chip">State<b id="pose-state">NEUTRAL</b></span></h2>
+      <div id="pose-cards"></div>
+      <details style="margin-bottom:12px">
+        <summary>How the pose is made</summary>
+        <pre>Calibrate: hold a relaxed hand still. The app takes the middle value
+  of about 20 clear frames as "neutral". Moving hands are rejected.
+Bend from neutral -> hip (knuckle), knee (middle joint), ankle (tip joint).
+  Fingertip offset from neutral -> foot position (-1 to +1).
+Tiny changes (about 2 degrees) are ignored so a still hand = still robot.
+Sensitivity scales every response. Smoothing calms jitter; fast
+  movements still get through (One Euro filter).
+Each joint is clamped to its limit: hip -40..40, knee 0..100, ankle -30..30.
+Hand lost: pose freezes 0.4 s, then eases to neutral. When the hand
+  returns the pose fades in over 0.4 s, so nothing snaps.
+Bars: centre line = neutral. Left = negative, right = positive.
+If a direction feels backwards, tell me which joint and I will flip it.</pre>
+      </details>
+
       <h2>Finger telemetry</h2>
       <div id="cards"></div>
       <details>
-        <summary>How to read these numbers</summary>
-        <pre>Joint angle: the angle at the joint between its two neighbouring points.
-  180° = straight finger, smaller = more bent.
-3D: uses MediaPipe world landmarks (real-world scale, includes depth).
-2D: flat image angle. It under-reads bending toward the camera,
-  so compare the two columns to see depth at work.
-MCP = knuckle (wrist, MCP, PIP). PIP = middle joint. DIP = near tip.
-Heading: direction of the MCP-to-tip line as you see it on screen.
-  0° = up, +90° = right, -90° = left, 180° = down.
+        <summary>How to read the finger numbers</summary>
+        <pre>Joint angle: 180° = straight finger, smaller = more bent.
+3D uses MediaPipe world landmarks (real scale, includes depth).
+2D is the flat image angle; it under-reads bending toward the camera.
+MCP = knuckle, PIP = middle joint, DIP = near the tip.
+Heading: direction of the knuckle-to-tip line on screen
+  (0° up, +90° right, 180° down).
 Tip: fingertip position relative to the wrist in palm lengths
-  (wrist to middle knuckle). x = right, y = up, as you see it.
-  Hand size and camera distance cancel out.
-Mirror view only changes the picture and the signs of heading and
-Tip x. It never changes joint angles.</pre>
+  (x right, y up, as you see it).
+Mirror view changes the picture and the sign of heading and Tip x only.</pre>
       </details>
     </section>
   </div>
 
   <section class="panel">
-    <h2>Geometry self-test</h2>
+    <h2>Self-test (geometry + motion)</h2>
     <div id="tests-summary" style="font-size:14px;font-weight:700">Running...</div>
     <details style="margin-top:8px"><summary>Show each test</summary><pre id="tests-detail"></pre></details>
   </section>
 
-  <footer>Next: Milestone 3 (calibration and motion mapping). Robot viewport arrives in Milestone 4.</footer>
+  <footer>Next: Milestone 4, the 2D robot that draws this pose.</footer>
 </div>
 
-<!-- ============================ GEOMETRY ============================ -->
 <script id="fb-geometry">
+
 /*
  * Pure math. No camera, no DOM. Safe to unit-test on its own.
  *
@@ -223,10 +266,10 @@ var FB = (function () {
   return { RAD2DEG: RAD2DEG, JOINTS: JOINTS, angleAt: angleAt, angleAt2D: angleAt2D, flexion: flexion,
            toPixelSpace: toPixelSpace, headingDeg: headingDeg, extractHand: extractHand };
 })();
-</script>
 
-<!-- ============================== TESTS ============================== -->
+</script>
 <script id="fb-tests">
+
 /* Returns [{name, ok, detail}]. Runs in the page and in Node (same code). */
 function runTests(FB) {
   var out = [];
@@ -340,21 +383,462 @@ function runTests(FB) {
   });
   return out;
 }
-</script>
 
-<!-- ============================ MEDIAPIPE LOAD ============================ -->
-<script id="fb-mediapipe-loader">
-  // Config: pinned MediaPipe version. Change here only.
-  var FB_MP_VERSION = '0.10.3';
-  window.fbMpReady = new Promise(function (resolve, reject) {
-    import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + FB_MP_VERSION + '/vision_bundle.js')
-      .then(function (m) { resolve({ HandLandmarker: m.HandLandmarker, FilesetResolver: m.FilesetResolver }); })
-      .catch(function (e) { reject(new Error('Could not load MediaPipe from the CDN (' + (e && e.message ? e.message : e) + '). Check your internet connection.')); });
+</script>
+<script id="fb-motion">
+/*
+ * Milestone 3: calibration, normalization, smoothing, joint limits -> RobotPose.
+ * Pure math. No camera, no DOM. Runs in the browser and in Node.
+ *
+ * Data flow per frame:
+ *   hand (from FB.extractHand) -> measure -> minus calibrated neutral -> dead zone
+ *   -> scale by sensitivity/range -> clamp [-1,1] -> One Euro smoothing
+ *   -> blend (start / resume / recalibrate) -> joint limits -> RobotPose
+ *
+ * Units: finger bend in degrees (flexion: 0 = straight, grows when curled).
+ *        normalized values in [-1, 1]. Robot rotations in degrees.
+ *        foot positions in [-1, 1] (fraction of the configured palm-length range).
+ * Mapping: MCP -> hip, PIP -> knee, DIP -> ankle, fingertip offset -> foot position.
+ * Left leg = index finger, right leg = middle finger (swap with config.swapLegs).
+ */
+var FBMotion = (function () {
+  'use strict';
+  var R2D = 180 / Math.PI;
+  var SRC = { hip: 'mcp', knee: 'pip', ankle: 'dip' };
+
+  function isNum(v) { return typeof v === 'number' && isFinite(v); }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function isObj(o) { return o && typeof o === 'object' && !Array.isArray(o); }
+  function merge(base, over) {
+    var out = {}, k;
+    for (k in base) out[k] = isObj(base[k]) ? merge(base[k], {}) : base[k];
+    for (k in over) out[k] = isObj(over[k]) && isObj(out[k]) ? merge(out[k], over[k]) : over[k];
+    return out;
+  }
+
+  var DEFAULTS = {
+    sensitivity: 1,        // multiplies every response (0.5 = calmer, 2 = more sensitive)
+    smoothing: 0.5,        // 0 = raw and twitchy, 1 = very smooth and laggy
+    swapLegs: false,       // false: index = left leg, middle = right leg
+    deadzoneDeg: 2,        // bend changes smaller than this are ignored (kills idle jitter)
+    footDeadzone: 0.02,    // same, for fingertip movement (in palm lengths)
+    holdMs: 400,           // after tracking is lost, freeze the pose this long
+    returnTau: 0.25,       // then ease back to neutral with this time constant (s)
+    blendMs: 400,          // fade-in when tracking starts, resumes, or recalibrates
+    ranges: { hip: 50, knee: 70, ankle: 45, footX: 0.5, footY: 0.5 }, // input that maps to full scale
+    signs:  { hip: 1, knee: 1, ankle: 1, footX: 1, footY: 1 },        // flip a direction if it feels backwards
+    limits: { hip: { min: -40, max: 40 }, knee: { min: 0, max: 100 }, ankle: { min: -30, max: 30 } }
+  };
+
+  // ---------- One Euro filter: smooth when slow, responsive when fast ----------
+  function lpAlpha(cutoff, dt) { var tau = 1 / (2 * Math.PI * cutoff); return 1 / (1 + tau / dt); }
+  function OneEuro(params) { this.p = params; this.reset(); }
+  OneEuro.prototype.setParams = function (p) { this.p = p; };
+  OneEuro.prototype.reset = function (v) {
+    this.x = v === undefined ? null : v; this.lastRaw = this.x; this.dx = 0;
+  };
+  OneEuro.prototype.filter = function (v, dt) {
+    if (this.x === null) { this.x = v; this.lastRaw = v; this.dx = 0; return v; }
+    var dxRaw = (v - this.lastRaw) / dt; this.lastRaw = v;
+    this.dx += lpAlpha(this.p.dCutoff, dt) * (dxRaw - this.dx);
+    var cutoff = this.p.minCutoff + this.p.beta * Math.abs(this.dx);
+    this.x += lpAlpha(cutoff, dt) * (v - this.x);
+    return this.x;
+  };
+  function smoothingParams(s) {
+    s = clamp(isNum(s) ? s : 0.5, 0, 1);
+    return { minCutoff: 12 * Math.pow(0.04, s), beta: 1.0, dCutoff: 1.5 }; // 12 Hz (light) .. 0.48 Hz (heavy)
+  }
+
+  // ---------- Measuring ----------
+  function measureFinger(f) {
+    return { mcp: f.mcp.flex * R2D, pip: f.pip.flex * R2D, dip: f.dip.flex * R2D, tipX: f.tip.x, tipY: f.tip.y };
+  }
+  function measure(hand) { return { index: measureFinger(hand.index), middle: measureFinger(hand.middle) }; }
+  function finite(m) {
+    return ['index', 'middle'].every(function (f) { return Object.keys(m[f]).every(function (k) { return isNum(m[f][k]); }); });
+  }
+  function deadzone(d, dz) { var a = Math.abs(d); return a <= dz ? 0 : (d < 0 ? -1 : 1) * (a - dz); }
+
+  // ---------- Calibration ----------
+  function median(a) { var s = a.slice().sort(function (x, y) { return x - y; }), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; }
+  function spread(a) { var s = a.slice().sort(function (x, y) { return x - y; }), n = s.length; return s[Math.floor(0.9 * (n - 1))] - s[Math.floor(0.1 * (n - 1))]; }
+
+  function createCalibrator(opts) {
+    var o = merge({ frames: 20, timeoutMs: 6000, minConf: 0.6, maxFlexSpreadDeg: 10, maxTipSpread: 0.08 }, opts || {});
+    var st = { status: 'idle', progress: 0, reason: '', baseline: null }, samples = [], t0 = 0;
+    function fail(reason) { st = { status: 'failed', progress: st.progress, reason: reason, baseline: null }; return st; }
+    function finish() {
+      var base = { frames: samples.length }, why = '';
+      ['index', 'middle'].forEach(function (f) {
+        base[f] = {};
+        ['mcp', 'pip', 'dip', 'tipX', 'tipY'].forEach(function (k) {
+          var vals = samples.map(function (m) { return m[f][k]; });
+          var lim = (k === 'tipX' || k === 'tipY') ? o.maxTipSpread : o.maxFlexSpreadDeg;
+          if (spread(vals) > lim) why = 'Your hand moved too much. Hold it still and try again.';
+          base[f][k] = median(vals);
+        });
+      });
+      if (why) return fail(why);
+      st = { status: 'done', progress: 1, reason: '', baseline: base };
+      return st;
+    }
+    return {
+      begin: function (t) { samples = []; t0 = t; st = { status: 'collecting', progress: 0, reason: '', baseline: null }; return st; },
+      push: function (hand, conf, t) {
+        if (st.status !== 'collecting') return st;
+        if (hand && (conf === null || conf === undefined || conf >= o.minConf)) {
+          var m = measure(hand); if (finite(m)) samples.push(m);
+        }
+        st.progress = Math.min(1, samples.length / o.frames);
+        if (samples.length >= o.frames) return finish();
+        if (t - t0 > o.timeoutMs) return fail('Not enough clear frames of your hand. Keep it fully in view and try again.');
+        return st;
+      },
+      get state() { return st; }
+    };
+  }
+
+  // ---------- Mapper ----------
+  function createMapper(userCfg) {
+    var cfg = merge(DEFAULTS, userCfg || {});
+    var base = null, lastT = null, lostSince = null, blend = null, active = false, state = 'neutral';
+    var NSIG = 5;
+    function mkFilters() { var a = []; for (var i = 0; i < NSIG; i++) a.push(new OneEuro(smoothingParams(cfg.smoothing))); return a; }
+    var filt = { index: mkFilters(), middle: mkFilters() };
+    var out = { index: [0, 0, 0, 0, 0], middle: [0, 0, 0, 0, 0] };
+
+    function raw(m, b) {
+      var r = cfg.ranges, s = cfg.signs, k = cfg.sensitivity, dz = cfg.deadzoneDeg, fz = cfg.footDeadzone;
+      return [
+        clamp(s.hip   * deadzone(m.mcp - b.mcp, dz) * k / r.hip,   -1, 1),
+        clamp(s.knee  * deadzone(m.pip - b.pip, dz) * k / r.knee,  -1, 1),
+        clamp(s.ankle * deadzone(m.dip - b.dip, dz) * k / r.ankle, -1, 1),
+        clamp(s.footX * deadzone(m.tipX - b.tipX, fz) * k / r.footX, -1, 1),
+        clamp(s.footY * deadzone(m.tipY - b.tipY, fz) * k / r.footY, -1, 1)
+      ];
+    }
+    function toDeg(n, lim) {
+      n = clamp(n, -1, 1);
+      var v = n >= 0 ? n * lim.max : -n * lim.min;
+      return clamp(v, Math.min(lim.min, lim.max), Math.max(lim.min, lim.max)) + 0;
+    }
+    function leg(n) {
+      var L = cfg.limits;
+      return { hipRotation: toDeg(n[0], L.hip), kneeRotation: toDeg(n[1], L.knee), ankleRotation: toDeg(n[2], L.ankle),
+               footPositionX: clamp(n[3], -1, 1) + 0, footPositionY: clamp(n[4], -1, 1) + 0 };
+    }
+    function build(t, tracking) {
+      var l = cfg.swapLegs ? out.middle : out.index, r = cfg.swapLegs ? out.index : out.middle;
+      return { leftLeg: leg(l), rightLeg: leg(r), isTracking: tracking, calibrated: !!base, state: state, timestamp: t,
+               norm: { left: l.slice(), right: r.slice() } };
+    }
+    function zeroOut() { out.index = [0, 0, 0, 0, 0]; out.middle = [0, 0, 0, 0, 0]; }
+
+    function update(hand, t) {
+      var dt = lastT === null ? 1 / 60 : clamp((t - lastT) / 1000, 1 / 240, 0.25);
+      lastT = t;
+      var m = hand ? measure(hand) : null;
+      if (m && !finite(m)) m = null;
+      if (!base) { state = 'neutral'; zeroOut(); return build(t, !!m); }
+
+      if (m) {
+        var rawV = { index: raw(m.index, base.index), middle: raw(m.middle, base.middle) };
+        if (!active) { // first good frame at start / after a dropout / after recalibration: fade in, don't jump
+          ['index', 'middle'].forEach(function (f) { filt[f].forEach(function (flt, i) { flt.reset(rawV[f][i]); }); });
+          blend = { t0: t, from: { index: out.index.slice(), middle: out.middle.slice() } };
+          active = true;
+        }
+        lostSince = null; state = 'live';
+        var s = 1;
+        if (blend) { s = clamp((t - blend.t0) / cfg.blendMs, 0, 1); s = s * s * (3 - 2 * s); if (t - blend.t0 >= cfg.blendMs) blend = null; }
+        ['index', 'middle'].forEach(function (f) {
+          for (var i = 0; i < NSIG; i++) {
+            var liveV = filt[f][i].filter(rawV[f][i], dt);
+            out[f][i] = blend || s < 1 ? blend.from[f][i] + (liveV - blend.from[f][i]) * s : liveV;
+          }
+        });
+        return build(t, true);
+      }
+
+      if (lostSince === null) lostSince = t;
+      active = false;
+      if (t - lostSince <= cfg.holdMs) { state = 'holding'; }
+      else {
+        state = 'returning';
+        var k = Math.exp(-dt / cfg.returnTau);
+        ['index', 'middle'].forEach(function (f) { out[f] = out[f].map(function (v) { return v * k; }); });
+      }
+      return build(t, false);
+    }
+
+    return {
+      update: update,
+      setBaseline: function (b) { base = b; active = false; lostSince = null; },
+      clearBaseline: function () { base = null; zeroOut(); active = false; lostSince = null; blend = null; lastT = null; state = 'neutral'; },
+      reset: function () { zeroOut(); active = false; lostSince = null; blend = null; lastT = null; state = 'neutral'; },
+      setConfig: function (p) {
+        cfg = merge(cfg, p || {});
+        ['index', 'middle'].forEach(function (f) { filt[f].forEach(function (x) { x.setParams(smoothingParams(cfg.smoothing)); }); });
+      },
+      get config() { return cfg; },
+      get calibrated() { return !!base; }
+    };
+  }
+
+  return { DEFAULTS: DEFAULTS, OneEuro: OneEuro, smoothingParams: smoothingParams, measure: measure, deadzone: deadzone,
+           createCalibrator: createCalibrator, createMapper: createMapper };
+})();
+
+</script>
+<script id="fb-motion-tests">
+/* Milestone 3 tests. Returns [{name, ok, detail}]. Same code runs in the page and in Node. */
+function runMotionTests(M) {
+  var out = [];
+  function approx(a, b, tol) { return typeof a === 'number' && Math.abs(a - b) <= (tol === undefined ? 1e-6 : tol); }
+  function t(name, fn) {
+    try { var r = fn(); out.push({ name: name, ok: r === true, detail: r === true ? '' : JSON.stringify(r) }); }
+    catch (e) { out.push({ name: name, ok: false, detail: 'threw: ' + e.message }); }
+  }
+  var D2R = Math.PI / 180;
+
+  // Synthetic hand: values are finger bend in degrees (flexion) and tip position in palm units.
+  function finger(o) { return { mcp: { flex: o.mcp * D2R }, pip: { flex: o.pip * D2R }, dip: { flex: o.dip * D2R }, tip: { x: o.tx, y: o.ty } }; }
+  var REST = { mcp: 20, pip: 30, dip: 15, tx: 0.1, ty: 0.9 };
+  function hand(idx, mid) { return { index: finger(Object.assign({}, REST, idx || {})), middle: finger(Object.assign({}, REST, mid || {})) }; }
+
+  function calibrate(mapper, h) {
+    var c = M.createCalibrator(), now = 0, st = c.begin(now);
+    for (var i = 0; i < 40 && st.status === 'collecting'; i++) { now += 16; st = c.push(h || hand(), 0.9, now); }
+    if (st.status !== 'done') throw new Error('calibration failed: ' + st.reason);
+    mapper.setBaseline(st.baseline);
+    return st.baseline;
+  }
+  // Feed the same hand for `sec` seconds at 60 fps. Returns {pose, t}.
+  function run(mapper, h, sec, t0, fps) {
+    fps = fps || 60; var t = t0, pose = null, n = Math.round(sec * fps);
+    for (var i = 0; i < n; i++) { t += 1000 / fps; pose = mapper.update(h, t); }
+    return { pose: pose, t: t };
+  }
+  // Small seeded random numbers so tests are repeatable.
+  function rng(seed) { var s = seed; return function () { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
+  function std(a) { var m = a.reduce(function (x, y) { return x + y; }, 0) / a.length; return Math.sqrt(a.reduce(function (x, y) { return x + (y - m) * (y - m); }, 0) / a.length); }
+  var DZ = M.DEFAULTS.deadzoneDeg;
+
+  // ---- One Euro filter ----
+  t('filter: first sample passes through, constant input stays constant', function () {
+    var f = new M.OneEuro(M.smoothingParams(0.5)), a = f.filter(0.7, 1 / 60), v = a;
+    for (var i = 0; i < 100; i++) v = f.filter(0.7, 1 / 60);
+    return (approx(a, 0.7, 1e-12) && approx(v, 0.7, 1e-9)) || [a, v];
   });
-  window.fbMpReady.catch(function () {}); // the app reads the error itself; avoids an "unhandled" console warning
-</script>
 
-<!-- ================================ APP ================================ -->
+  // ---- Calibration ----
+  t('calibration: steady hand -> done, baseline = measured pose', function () {
+    var c = M.createCalibrator(), st = c.begin(0);
+    for (var i = 0; i < 20; i++) st = c.push(hand(), 0.9, i * 16);
+    var b = st.baseline;
+    return (st.status === 'done' && approx(b.index.pip, 30, 1e-9) && approx(b.middle.dip, 15, 1e-9) && approx(b.index.tipY, 0.9, 1e-9)) || st;
+  });
+  t('calibration: uses the median, so one bad frame does not matter', function () {
+    var c = M.createCalibrator(), st = c.begin(0);
+    for (var i = 0; i < 20; i++) st = c.push(i === 7 ? hand({ pip: 60 }) : hand(), 0.9, i * 16);
+    return (st.status === 'done' && approx(st.baseline.index.pip, 30, 1e-9)) || st;
+  });
+  t('calibration: moving hand is rejected with a reason', function () {
+    var c = M.createCalibrator(), st = c.begin(0);
+    for (var i = 0; i < 20; i++) st = c.push(hand({ pip: 30 + (i % 2 ? 20 : -20) }), 0.9, i * 16);
+    return (st.status === 'failed' && /moved/i.test(st.reason)) || st;
+  });
+  t('calibration: skips missing hands and still completes', function () {
+    var c = M.createCalibrator(), st = c.begin(0), now = 0;
+    for (var i = 0; i < 40; i++) { now += 16; st = c.push(i % 2 ? null : hand(), 0.9, now); }
+    return st.status === 'done' || st;
+  });
+  t('calibration: low-confidence frames are ignored, then it times out', function () {
+    var c = M.createCalibrator(), st = c.begin(0);
+    for (var i = 0; i < 500; i++) st = c.push(hand(), 0.2, i * 16);
+    return (st.status === 'failed' && /clear frames/i.test(st.reason)) || st;
+  });
+
+  // ---- Mapping ----
+  t('before calibration the pose is neutral and flagged uncalibrated', function () {
+    var m = M.createMapper(), r = run(m, hand({ pip: 80 }), 1, 0).pose;
+    return (r.leftLeg.kneeRotation === 0 && r.calibrated === false && r.isTracking === true) || r;
+  });
+  t('holding the calibrated pose gives a neutral robot', function () {
+    var m = M.createMapper(); calibrate(m);
+    var p = run(m, hand(), 2, 1000).pose, L = p.leftLeg, R = p.rightLeg;
+    return [L.hipRotation, L.kneeRotation, L.ankleRotation, L.footPositionX, R.kneeRotation].every(function (v) { return approx(v, 0, 1e-9); }) || p;
+  });
+  t('bending only the index PIP moves only the left knee', function () {
+    var m = M.createMapper(); calibrate(m);
+    var p = run(m, hand({ pip: 70 }), 3, 1000).pose;           // +40 deg
+    var expect = (40 - DZ) / M.DEFAULTS.ranges.knee * M.DEFAULTS.limits.knee.max;
+    var R = p.rightLeg;
+    return (approx(p.leftLeg.kneeRotation, expect, 0.3) && approx(p.leftLeg.hipRotation, 0, 1e-9) &&
+            approx(R.kneeRotation, 0, 1e-9) && approx(R.hipRotation, 0, 1e-9) && approx(R.ankleRotation, 0, 1e-9)) || [p.leftLeg, p.rightLeg, expect];
+  });
+  t('bending only the middle finger moves only the right leg', function () {
+    var m = M.createMapper(); calibrate(m);
+    var p = run(m, hand({}, { pip: 70, dip: 50 }), 3, 1000).pose;
+    return (p.rightLeg.kneeRotation > 30 && p.rightLeg.ankleRotation > 10 &&
+            approx(p.leftLeg.kneeRotation, 0, 1e-9) && approx(p.leftLeg.ankleRotation, 0, 1e-9)) || [p.leftLeg, p.rightLeg];
+  });
+  t('swapLegs sends the index finger to the right leg', function () {
+    var m = M.createMapper({ swapLegs: true }); calibrate(m);
+    var p = run(m, hand({ pip: 70 }), 3, 1000).pose;
+    return (p.rightLeg.kneeRotation > 30 && approx(p.leftLeg.kneeRotation, 0, 1e-9)) || [p.leftLeg, p.rightLeg];
+  });
+  t('extreme bending never exceeds the joint limits', function () {
+    var m = M.createMapper(); calibrate(m);
+    var hi = run(m, hand({ pip: 300, mcp: 300, dip: 300 }), 3, 1000), lo = run(m, hand({ pip: -300, mcp: -300, dip: -300 }), 3, hi.t);
+    var L = M.DEFAULTS.limits, a = hi.pose.leftLeg, b = lo.pose.leftLeg;
+    return (approx(a.kneeRotation, L.knee.max, 1e-9) && approx(a.hipRotation, L.hip.max, 1e-9) && approx(a.ankleRotation, L.ankle.max, 1e-9) &&
+            approx(b.kneeRotation, L.knee.min, 1e-9) && approx(b.hipRotation, L.hip.min, 1e-9)) || [a, b];
+  });
+  t('dead zone: 1 degree of jitter does nothing', function () {
+    var m = M.createMapper(); calibrate(m);
+    var worst = 0, tt = 1000, r;
+    for (var i = 0; i < 120; i++) { tt += 16.7; r = m.update(hand({ pip: 30 + (i % 2 ? 1 : -1) }), tt); worst = Math.max(worst, Math.abs(r.leftLeg.kneeRotation)); }
+    return worst === 0 || worst;
+  });
+  t('sensitivity 2 doubles the response (below the limit)', function () {
+    var a = M.createMapper({ sensitivity: 1 }), b = M.createMapper({ sensitivity: 2 }); calibrate(a); calibrate(b);
+    var pa = run(a, hand({ pip: 45 }), 3, 1000).pose.leftLeg.kneeRotation, pb = run(b, hand({ pip: 45 }), 3, 1000).pose.leftLeg.kneeRotation;
+    return approx(pb, 2 * pa, 0.3) || [pa, pb];
+  });
+  t('fingertip movement drives foot position, and is bounded', function () {
+    var m = M.createMapper(); calibrate(m);
+    var p = run(m, hand({ tx: 0.1 + 0.2 }), 3, 1000).pose.leftLeg, q = run(m, hand({ tx: 9 }), 3, 5000).pose.leftLeg;
+    return (p.footPositionX > 0.2 && p.footPositionX < 0.6 && approx(q.footPositionX, 1, 1e-9)) || [p, q];
+  });
+  t('recalibrating in a different pose restores a neutral robot', function () {
+    var m = M.createMapper(); calibrate(m);
+    var r1 = run(m, hand({ pip: 80 }), 2, 1000);
+    calibrate(m, hand({ pip: 80 }));
+    var p = run(m, hand({ pip: 80 }), 2, r1.t).pose;
+    return approx(p.leftLeg.kneeRotation, 0, 1e-9) || p.leftLeg;
+  });
+
+  // ---- Smoothing ----
+  t('smoothing reduces jitter a lot', function () {
+    function jitter(s) {
+      var m = M.createMapper({ smoothing: s }), rnd = rng(7), vals = []; calibrate(m);
+      var tt = 1000; for (var i = 0; i < 240; i++) { tt += 1000 / 60; var p = m.update(hand({ pip: 70 + (rnd() - 0.5) * 8 }), tt); if (i > 120) vals.push(p.leftLeg.kneeRotation); }
+      return std(vals);
+    }
+    var raw = jitter(0), smooth = jitter(0.8);
+    return smooth < raw * 0.5 || [raw, smooth];
+  });
+  t('default smoothing reaches 90% of a step within 0.6 s; heavier smoothing is slower', function () {
+    function stepTime(s) {
+      var m = M.createMapper({ smoothing: s }); calibrate(m);
+      var r = run(m, hand(), 1.5, 1000), target = (40 - DZ) / M.DEFAULTS.ranges.knee * M.DEFAULTS.limits.knee.max, tt = r.t;
+      for (var i = 0; i < 300; i++) { tt += 1000 / 60; var p = m.update(hand({ pip: 70 }), tt); if (p.leftLeg.kneeRotation >= 0.9 * target) return (tt - r.t) / 1000; }
+      return Infinity;
+    }
+    var a = stepTime(0.5), b = stepTime(1);
+    return (a <= 0.6 && b > a) || [a, b];
+  });
+
+  // ---- Tracking loss and recovery ----
+  t('tracking loss: pose is held, then eases to neutral, never snaps', function () {
+    var m = M.createMapper(); calibrate(m);
+    var r = run(m, hand({ pip: 70 }), 3, 1000), before = r.pose.leftLeg.kneeRotation, tt = r.t, held = null, prev = before, monotonic = true, firstDrop = 0;
+    for (var i = 0; i < 12; i++) { tt += 1000 / 60; held = m.update(null, tt); }       // ~0.2 s: inside holdMs
+    var duringHold = held.leftLeg.kneeRotation;
+    for (i = 0; i < 180; i++) { tt += 1000 / 60; var p = m.update(null, tt).leftLeg.kneeRotation; if (p > prev + 1e-9) monotonic = false; if (i === 0) firstDrop = prev - p; prev = p; }
+    return (approx(duringHold, before, 1e-9) && monotonic && prev < before * 0.05 && firstDrop < before * 0.2 && held.isTracking === false) ||
+           { before: before, duringHold: duringHold, end: prev, monotonic: monotonic, firstDrop: firstDrop };
+  });
+  t('tracking resumes smoothly: no jump on the first frame, converges after', function () {
+    var m = M.createMapper(); calibrate(m);
+    var r = run(m, hand({ pip: 70 }), 3, 1000), tt = r.t, p;
+    for (var i = 0; i < 240; i++) { tt += 1000 / 60; p = m.update(null, tt); }       // long loss -> neutral
+    var neutral = p.leftLeg.kneeRotation;
+    tt += 1000 / 60; var first = m.update(hand({ pip: 70 }), tt).leftLeg.kneeRotation;
+    var settled = run(m, hand({ pip: 70 }), 1.5, tt).pose.leftLeg.kneeRotation, target = (40 - DZ) / M.DEFAULTS.ranges.knee * M.DEFAULTS.limits.knee.max;
+    return (Math.abs(first - neutral) < 0.15 * target && approx(settled, target, 0.5)) || [neutral, first, settled, target];
+  });
+  t('first tracked frame after calibration fades in instead of jumping', function () {
+    var m = M.createMapper(); calibrate(m);
+    var first = m.update(hand({ pip: 80 }), 1000).leftLeg.kneeRotation;
+    return first < 5 || first;
+  });
+
+  // ---- Robustness ----
+  t('repeated timestamps and huge gaps never produce NaN', function () {
+    var m = M.createMapper(); calibrate(m);
+    var times = [1000, 1000, 1000, 1000.0001, 9e6, 9e6 + 1, 5, 5e9], ok = true;
+    times.forEach(function (tt) { var p = m.update(hand({ pip: 50 }), tt); ok = ok && isFinite(p.leftLeg.kneeRotation) && isFinite(p.rightLeg.footPositionX); });
+    return ok || 'NaN found';
+  });
+  t('fuzz: 3000 random frames (dropouts, wild angles) stay finite and inside limits', function () {
+    var rnd = rng(42), m = M.createMapper({ sensitivity: 2.5, smoothing: 0.2 }); calibrate(m);
+    var L = M.DEFAULTS.limits, tt = 1000, bad = null;
+    for (var i = 0; i < 3000 && !bad; i++) {
+      tt += rnd() * 40;
+      var h = rnd() < 0.2 ? null : hand({ mcp: rnd() * 400 - 150, pip: rnd() * 400 - 150, dip: rnd() * 400 - 150, tx: rnd() * 20 - 10, ty: rnd() * 20 - 10 },
+                                        { mcp: rnd() * 400 - 150, pip: rnd() * 400 - 150, dip: rnd() * 400 - 150 });
+      var p = m.update(h, tt), legs = [p.leftLeg, p.rightLeg];
+      legs.forEach(function (g) {
+        var vals = [g.hipRotation, g.kneeRotation, g.ankleRotation, g.footPositionX, g.footPositionY];
+        if (!vals.every(isFinite)) bad = ['not finite', i, g];
+        else if (g.hipRotation < L.hip.min || g.hipRotation > L.hip.max || g.kneeRotation < L.knee.min || g.kneeRotation > L.knee.max ||
+                 g.ankleRotation < L.ankle.min || g.ankleRotation > L.ankle.max || Math.abs(g.footPositionX) > 1 || Math.abs(g.footPositionY) > 1) bad = ['out of limits', i, g];
+      });
+    }
+    return !bad || bad;
+  });
+  t('config change (sensitivity, smoothing) at runtime does not break the output', function () {
+    var m = M.createMapper(); calibrate(m);
+    var r = run(m, hand({ pip: 60 }), 1, 1000);
+    m.setConfig({ sensitivity: 1.7, smoothing: 0.9, signs: { knee: -1 } });
+    var p = run(m, hand({ pip: 60 }), 2, r.t).pose.leftLeg.kneeRotation;
+    return (isFinite(p) && p >= 0 && p <= M.DEFAULTS.limits.knee.max) || p;
+  });
+  return out;
+}
+
+</script>
+<script id="fb-loader">
+// MediaPipe loader. Tries several official CDN paths, because the exact file name differs between package versions.
+var FB_MP_VERSION = '0.10.3';
+(function () {
+  var base = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + FB_MP_VERSION;
+  var candidates = [base, base + '/+esm', base + '/vision_bundle.mjs', base + '/vision_bundle.js'];
+  var cached = null;
+
+  function withT(p, ms, msg) {
+    return new Promise(function (resolve, reject) {
+      var id = setTimeout(function () { reject(new Error(msg)); }, ms);
+      p.then(function (v) { clearTimeout(id); resolve(v); }, function (e) { clearTimeout(id); reject(e); });
+    });
+  }
+
+  window.fbLoadMp = async function (onStatus) {
+    if (cached) return cached;
+    var errs = [];
+    for (var i = 0; i < candidates.length; i++) {
+      var url = candidates[i], label = url.replace(base, '') || '(package main)';
+      try {
+        if (onStatus) onStatus('SCRIPT ' + (i + 1) + '/' + candidates.length);
+        var m = await withT(import(url), 20000, 'timed out');
+        if (m && m.HandLandmarker && m.FilesetResolver) {
+          cached = { HandLandmarker: m.HandLandmarker, FilesetResolver: m.FilesetResolver, url: url };
+          console.info('MediaPipe loaded from', url);
+          return cached;
+        }
+        errs.push(label + ': loaded, but HandLandmarker/FilesetResolver missing');
+      } catch (e) {
+        errs.push(label + ': ' + (e && e.message ? e.message : e));
+      }
+    }
+    throw new Error('Could not load the MediaPipe script. Tried ' + errs.join(' | '));
+  };
+})();
+
+</script>
 <script id="fb-app">
 (function () {
   'use strict';
@@ -362,10 +846,9 @@ function runTests(FB) {
   // ---------- Config (edit here) ----------
   var WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + window.FB_MP_VERSION + '/wasm';
   var MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
-  var HOLD_MS = 250;            // keep last reading this long after the hand vanishes (prevents flicker)
-  var UI_MS = 100;              // telemetry refresh interval (tracking itself runs per camera frame)
-  var MODEL_TIMEOUT_MS = 30000; // give up loading the model after this long
-  var BAR_MAX_FLEX_DEG = 110;   // full gauge = this much bend
+  var HOLD_MS = 250;            // keep the last reading this long after the hand vanishes (prevents flicker)
+  var UI_MS = 100;              // screen refresh interval (tracking itself runs on every camera frame)
+  var BAR_MAX_FLEX_DEG = 110;   // full finger gauge = this much bend
   var CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
                      [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 
@@ -373,19 +856,22 @@ function runTests(FB) {
   function $(id) { return document.getElementById(id); }
   var video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d'), stage = $('stage');
   var stageMsg = $('stage-msg'), msgEl = $('msg'), btn = $('btn-camera');
-  var optOverlay = $('opt-overlay'), optMirror = $('opt-mirror');
+  var optOverlay = $('opt-overlay'), optMirror = $('opt-mirror'), optSwap = $('opt-swap');
+  var banner = $('banner'), bannerText = $('banner-text'), btnRetry = $('btn-retry');
+  var btnCal = $('btn-cal'), btnResetCal = $('btn-reset-cal'), calStatus = $('cal-status');
+  var sens = $('sens'), smooth = $('smooth');
 
-  // ---------- Self-tests ----------
+  // ---------- Self-tests (geometry + motion) ----------
   (function showTests() {
-    var res = runTests(FB), pass = res.filter(function (r) { return r.ok; }).length;
+    var res = runTests(FB).concat(runMotionTests(FBMotion)), pass = res.filter(function (r) { return r.ok; }).length;
     var s = $('tests-summary');
     s.textContent = pass + ' / ' + res.length + ' tests passed';
     s.className = pass === res.length ? 't-ok' : 't-bad';
     $('tests-detail').textContent = res.map(function (r) { return (r.ok ? 'PASS  ' : 'FAIL  ') + r.name + (r.ok ? '' : '  -> ' + r.detail); }).join('\n');
-    if (pass !== res.length) console.error('Geometry tests failed', res.filter(function (r) { return !r.ok; }));
+    if (pass !== res.length) console.error('Self-tests failed', res.filter(function (r) { return !r.ok; }));
   })();
 
-  // ---------- Telemetry cards ----------
+  // ---------- Finger telemetry cards ----------
   var JN = [['pip', 'PIP'], ['dip', 'DIP'], ['mcp', 'MCP']];
   function cardHTML(key, label, cls) {
     var rows = JN.map(function (j) {
@@ -400,11 +886,23 @@ function runTests(FB) {
   }
   $('cards').innerHTML = cardHTML('idx', 'Index finger', 'idx') + cardHTML('mid', 'Middle finger', 'mid');
 
+  // ---------- Robot pose cards ----------
+  function legHTML(key, label, cls) {
+    var rows = [['hip', 'Hip'], ['knee', 'Knee'], ['ankle', 'Ankle']].map(function (j) {
+      return '<div class="row2"><span class="k">' + j[1] + '</span><span class="v" id="' + key + '-' + j[0] + '">--</span>' +
+             '<div class="bar2"><i id="' + key + '-' + j[0] + '-bar"></i></div></div>';
+    }).join('');
+    return '<div class="card ' + cls + '"><h3 id="' + key + '-title">' + label + '</h3>' + rows +
+      '<div class="kv"><span>Foot (x, y)</span><span class="v" id="' + key + '-foot">--</span></div></div>';
+  }
+  $('pose-cards').innerHTML = legHTML('L', 'Left leg', 'idx') + legHTML('R', 'Right leg', 'mid');
+
   var els = {};
   function el(id) { return els[id] || (els[id] = $(id)); }
   function text(id, s) { var e = el(id); if (e.textContent !== s) e.textContent = s; }
   function deg(rad) { return Math.round(rad * FB.RAD2DEG) + '°'; }
   function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+  function setBi(id, v) { var e = el(id), w = Math.abs(clamp(v, -1, 1)) * 50; e.style.width = w + '%'; e.style.left = (v < 0 ? 50 - w : 50) + '%'; }
 
   function renderFinger(key, f) {
     JN.forEach(function (j) {
@@ -417,15 +915,23 @@ function runTests(FB) {
     text(key + '-head', f && f.heading !== null ? Math.round(f.heading) + '°' : '--');
     text(key + '-tip', f ? f.tip.x.toFixed(2) + ', ' + f.tip.y.toFixed(2) : '--');
   }
+  function renderLeg(key, g, n) {
+    ['hip', 'knee', 'ankle'].forEach(function (j, i) {
+      text(key + '-' + j, g ? Math.round(g[j + 'Rotation']) + '°' : '--');
+      setBi(key + '-' + j + '-bar', n ? n[i] : 0);
+    });
+    text(key + '-foot', g ? g.footPositionX.toFixed(2) + ', ' + g.footPositionY.toFixed(2) : '--');
+  }
 
   // ---------- State ----------
-  var cameraState = 'camera-off';   // camera-off | camera-starting | camera-ready | camera-error
-  var trackingState = 'loading-model'; // loading-model | idle | tracking | hand-not-detected | tracking-error
-  var delegateUsed = '--';
-  var lastHand = null, lastSeen = 0, lastConf = null;
+  var cameraState = 'camera-off';       // camera-off | camera-starting | camera-ready | camera-error
+  var trackingState = 'loading-model';  // loading-model | idle | tracking | hand-not-detected | tracking-error
+  var modelLabel = 'LOADING', modelWarn = true, modelError = '';
+  var lastHand = null, lastSeen = 0, lastConf = null, lastPose = null;
   var fps = 0, infMs = 0, frames = 0, fpsT0 = performance.now();
   var landmarker = null, rafId = 0, lastVideoTime = -1, lastTs = 0, lastUi = 0;
   var stream = null, camToken = 0;
+  var mapper = FBMotion.createMapper(), cal = FBMotion.createCalibrator();
 
   function chip(id, label, cls) { var e = $(id); e.textContent = label; e.className = cls || ''; }
   function renderChips() {
@@ -434,51 +940,76 @@ function runTests(FB) {
     var t = { 'loading-model': ['LOADING MODEL', 'warn'], 'idle': ['IDLE', ''], 'tracking': ['TRACKING', 'ok'],
               'hand-not-detected': ['NO HAND', 'warn'], 'tracking-error': ['ERROR', 'bad'] }[trackingState];
     chip('c-tracking', t[0], t[1]);
-    chip('c-model', delegateUsed, delegateUsed === 'CPU' ? 'warn' : '');
+    chip('c-model', modelLabel, trackingState === 'tracking-error' ? 'bad' : (modelWarn ? 'warn' : ''));
     chip('c-fps', cameraState === 'camera-ready' && fps > 0 ? String(fps) : '--');
     chip('c-ms', cameraState === 'camera-ready' && infMs > 0 ? infMs.toFixed(1) + ' ms' : '--');
     chip('c-conf', trackingState === 'tracking' && lastConf !== null ? Math.round(lastConf * 100) + '%' : '--');
     btn.textContent = { 'camera-off': 'Start camera', 'camera-error': 'Start camera', 'camera-starting': 'Cancel', 'camera-ready': 'Stop camera' }[cameraState];
     btn.className = cameraState === 'camera-ready' || cameraState === 'camera-starting' ? 'stop' : '';
+    btnCal.disabled = !(cameraState === 'camera-ready' && trackingState !== 'loading-model' && trackingState !== 'tracking-error');
+  }
+  function renderPose() {
+    var p = lastPose;
+    renderLeg('L', p && p.leftLeg, p && p.norm.left);
+    renderLeg('R', p && p.rightLeg, p && p.norm.right);
+    var label = !p ? 'NEUTRAL' : (!p.calibrated ? 'NEUTRAL (calibrate first)' : { neutral: 'NEUTRAL', live: 'LIVE', holding: 'HOLDING', returning: 'RETURNING TO NEUTRAL' }[p.state]);
+    chip('pose-state', label, p && p.calibrated && p.state === 'live' ? 'ok' : 'warn');
+    var swap = mapper.config.swapLegs;
+    text('L-title', 'Left leg (' + (swap ? 'middle' : 'index') + ' finger)');
+    text('R-title', 'Right leg (' + (swap ? 'index' : 'middle') + ' finger)');
   }
   function renderTelemetry() {
     renderFinger('idx', lastHand && lastHand.index);
     renderFinger('mid', lastHand && lastHand.middle);
+    renderPose();
     renderChips();
   }
   function setCamera(s) { cameraState = s; renderChips(); }
   function setTracking(s) { if (trackingState !== s) { trackingState = s; renderChips(); } }
-  function showError(m) { msgEl.textContent = m || ''; }
+  function showError(m) { msgEl.textContent = m || ''; }                  // camera / runtime messages
+  function showBanner(m) {                                                // model-loading failures: stay until fixed
+    modelError = m || '';
+    banner.hidden = !modelError; bannerText.textContent = modelError;
+  }
 
-  // ---------- Model ----------
+  // ---------- Model (visible steps, timeouts, GPU -> CPU fallback, retry) ----------
   function withTimeout(p, ms, message) {
     return new Promise(function (resolve, reject) {
       var id = setTimeout(function () { reject(new Error(message)); }, ms);
       p.then(function (v) { clearTimeout(id); resolve(v); }, function (e) { clearTimeout(id); reject(e); });
     });
   }
-  function initModel() {
-    var work = (async function () {
-      var mp = await window.fbMpReady;
-      var fileset = await mp.FilesetResolver.forVisionTasks(WASM_URL);
-      function opts(delegate) { return { baseOptions: { modelAssetPath: MODEL_URL, delegate: delegate }, runningMode: 'VIDEO', numHands: 1 }; }
-      try {
-        landmarker = await mp.HandLandmarker.createFromOptions(fileset, opts('GPU'));
-        delegateUsed = 'GPU';
-      } catch (gpuErr) {
-        console.warn('GPU delegate failed, falling back to CPU:', gpuErr);
-        landmarker = await mp.HandLandmarker.createFromOptions(fileset, opts('CPU'));
-        delegateUsed = 'CPU';
+  var loadId = 0, ticker = 0;
+  async function loadModel() {
+    var my = ++loadId, t0 = Date.now(), step = 'SCRIPT';
+    showBanner(''); landmarker = null; trackingState = 'loading-model'; modelWarn = true;
+    function paint() { modelLabel = step + ' ' + Math.round((Date.now() - t0) / 1000) + 's'; renderChips(); }
+    clearInterval(ticker); ticker = setInterval(paint, 1000); paint();
+    try {
+      var mp = await withTimeout(window.fbLoadMp(function (s) { step = s; paint(); }), 90000, 'Loading the MediaPipe script took too long.');
+      step = 'ENGINE'; paint();
+      var fileset = await withTimeout(mp.FilesetResolver.forVisionTasks(WASM_URL), 45000, 'Loading the MediaPipe engine files (wasm) took too long.');
+      function opts(d) { return { baseOptions: { modelAssetPath: MODEL_URL, delegate: d }, runningMode: 'VIDEO', numHands: 1 }; }
+      var lm, used;
+      step = 'MODEL'; paint();
+      try { lm = await withTimeout(mp.HandLandmarker.createFromOptions(fileset, opts('GPU')), 30000, 'GPU start timed out.'); used = 'GPU'; }
+      catch (gpuErr) {
+        console.warn('GPU delegate failed, trying CPU:', gpuErr);
+        step = 'MODEL (CPU)'; paint();
+        lm = await withTimeout(mp.HandLandmarker.createFromOptions(fileset, opts('CPU')), 90000, 'Downloading or starting the hand model took too long.');
+        used = 'CPU';
       }
-    })();
-    withTimeout(work, MODEL_TIMEOUT_MS, 'Loading the hand model took more than ' + (MODEL_TIMEOUT_MS / 1000) + ' s.')
-      .then(function () { setTracking('idle'); })
-      .catch(function (e) {
-        console.error(e);
-        trackingState = 'tracking-error'; delegateUsed = '--';
-        showError('Hand tracking could not start: ' + e.message + ' Reload the page to retry.');
-        renderChips();
-      });
+      if (my !== loadId) return;
+      clearInterval(ticker); landmarker = lm; modelLabel = used; modelWarn = used === 'CPU';
+      trackingState = cameraState === 'camera-ready' ? 'hand-not-detected' : 'idle';
+      renderChips();
+    } catch (e) {
+      if (my !== loadId) return;
+      clearInterval(ticker); console.error(e);
+      trackingState = 'tracking-error'; modelLabel = 'FAILED'; modelWarn = false;
+      showBanner('Hand tracking could not start. ' + (e && e.message ? e.message : e));
+      renderChips();
+    }
   }
 
   // ---------- Camera ----------
@@ -499,14 +1030,13 @@ function runTests(FB) {
     setCamera('camera-starting'); stageMsg.textContent = 'Requesting camera access...'; stageMsg.style.display = 'flex';
     try {
       var s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-      if (token !== camToken) { s.getTracks().forEach(function (t) { t.stop(); }); return; } // cancelled while waiting
-      stream = s;
-      video.srcObject = s;
+      if (token !== camToken) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+      stream = s; video.srcObject = s;
       if (video.readyState < 1) await new Promise(function (r) { video.addEventListener('loadedmetadata', r, { once: true }); });
       await video.play();
       if (token !== camToken) return;
       var vw = video.videoWidth, vh = video.videoHeight;
-      canvas.width = vw; canvas.height = vh;                 // canvas = camera pixels, so overlay lines up exactly
+      canvas.width = vw; canvas.height = vh;                  // canvas = camera pixels, so the overlay lines up exactly
       stage.style.aspectRatio = vw + ' / ' + vh;
       stageMsg.style.display = 'none';
       lastVideoTime = -1; lastSeen = 0; lastHand = null; frames = 0; fpsT0 = performance.now();
@@ -529,9 +1059,11 @@ function runTests(FB) {
     if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
     releaseStream();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    lastHand = null; lastConf = null; fps = 0; infMs = 0;
+    lastHand = null; lastConf = null; fps = 0; infMs = 0; lastPose = null;
+    mapper.reset();                                            // robot returns to neutral; calibration is kept
+    if (cal.state.status === 'collecting') { cal = FBMotion.createCalibrator(); setCal('Calibration cancelled.', ''); }
     stageMsg.textContent = 'Camera is off. Press Start camera.'; stageMsg.style.display = 'flex';
-    if (trackingState !== 'tracking-error' && trackingState !== 'loading-model') trackingState = 'idle';
+    if (trackingState === 'tracking' || trackingState === 'hand-not-detected') trackingState = 'idle';
     setCamera('camera-off');
     renderTelemetry();
   }
@@ -543,19 +1075,15 @@ function runTests(FB) {
     ctx.beginPath();
     for (k = 0; k < ids.length; k++) { var p = lm[ids[k]]; if (k === 0) ctx.moveTo(p.x * W, p.y * H); else ctx.lineTo(p.x * W, p.y * H); }
     ctx.stroke();
-    for (k = 1; k < ids.length; k++) {
-      var q = lm[ids[k]];
-      ctx.beginPath(); ctx.arc(q.x * W, q.y * H, (k === 4 ? 6 : 4.5) * s, 0, 6.2832); ctx.fillStyle = color; ctx.fill();
-    }
-    var pip = lm[ids[2]];                                     // ring marks the PIP joint we measure
+    for (k = 1; k < ids.length; k++) { var q = lm[ids[k]]; ctx.beginPath(); ctx.arc(q.x * W, q.y * H, (k === 4 ? 6 : 4.5) * s, 0, 6.2832); ctx.fillStyle = color; ctx.fill(); }
+    var pip = lm[ids[2]];                                      // white ring marks the PIP (knee) joint
     ctx.beginPath(); ctx.arc(pip.x * W, pip.y * H, 9 * s, 0, 6.2832); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * s; ctx.stroke();
   }
   function draw(lm) {
     var W = canvas.width, H = canvas.height, s = W / 640;
     ctx.clearRect(0, 0, W, H);
     if (!lm || !optOverlay.checked) return;
-    ctx.strokeStyle = 'rgba(210,220,240,.35)'; ctx.lineWidth = 2 * s;
-    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(210,220,240,.35)'; ctx.lineWidth = 2 * s; ctx.beginPath();
     CONNECTIONS.forEach(function (c) { var a = lm[c[0]], b = lm[c[1]]; ctx.moveTo(a.x * W, a.y * H); ctx.lineTo(b.x * W, b.y * H); });
     ctx.stroke();
     drawChain(lm, [0, 5, 6, 7, 8], '#4f9cff', s);
@@ -563,13 +1091,35 @@ function runTests(FB) {
     ctx.beginPath(); ctx.arc(lm[0].x * W, lm[0].y * H, 6 * s, 0, 6.2832); ctx.fillStyle = '#f5b942'; ctx.fill();
   }
 
+  // ---------- Calibration UI ----------
+  function setCal(msg, cls) { calStatus.textContent = msg; calStatus.className = cls || ''; }
+  function handleCal(st) {
+    if (st.status === 'collecting') setCal('Hold your hand still in a relaxed pose... ' + Math.round(st.progress * 100) + '%', 'warn');
+    else if (st.status === 'done') { mapper.setBaseline(st.baseline); setCal('Calibrated from ' + st.baseline.frames + ' frames. Move your fingers!', 'ok'); }
+    else if (st.status === 'failed') setCal(st.reason, 'bad');
+  }
+  btnCal.addEventListener('click', function () {
+    if (cameraState !== 'camera-ready') { setCal('Start the camera first.', 'bad'); return; }
+    cal = FBMotion.createCalibrator(); handleCal(cal.begin(performance.now()));
+  });
+  btnResetCal.addEventListener('click', function () {
+    mapper.clearBaseline(); cal = FBMotion.createCalibrator(); setCal('Not calibrated. The robot stays neutral.', ''); lastPose = null; renderTelemetry();
+  });
+  function applySettings() {
+    $('sens-val').textContent = Number(sens.value).toFixed(2) + 'x';
+    $('smooth-val').textContent = Math.round(smooth.value * 100) + '%';
+    mapper.setConfig({ sensitivity: Number(sens.value), smoothing: Number(smooth.value), swapLegs: optSwap.checked });
+  }
+  sens.addEventListener('input', applySettings); smooth.addEventListener('input', applySettings);
+  optSwap.addEventListener('change', function () { applySettings(); renderPose(); });
+
   // ---------- Tracking loop (single loop, one inference per new camera frame) ----------
   function loop() {
     rafId = requestAnimationFrame(loop);
     if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
     lastVideoTime = video.currentTime;
 
-    var ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts; // MediaPipe needs increasing timestamps
+    var ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts;   // MediaPipe needs increasing timestamps
     var res;
     try { res = landmarker.detectForVideo(video, ts); }
     catch (e) {
@@ -586,13 +1136,12 @@ function runTests(FB) {
     lastConf = hd && hd[0] && hd[0][0] && typeof hd[0][0].score === 'number' ? hd[0][0].score : null;
     var hand = lm ? FB.extractHand(lm, wl, video.videoWidth, video.videoHeight, optMirror.checked) : null;
 
-    if (hand) {
-      lastHand = hand; lastSeen = now; setTracking('tracking'); draw(lm);
-    } else if (lastHand && now - lastSeen <= HOLD_MS) {
-      // brief dropout: keep showing the last reading instead of flickering
-    } else {
-      lastHand = null; setTracking('hand-not-detected'); draw(null);
-    }
+    if (hand) { lastHand = hand; lastSeen = now; setTracking('tracking'); draw(lm); }
+    else if (lastHand && now - lastSeen <= HOLD_MS) { /* brief dropout: keep showing the last reading */ }
+    else { lastHand = null; setTracking('hand-not-detected'); draw(null); }
+
+    if (cal.state.status === 'collecting') handleCal(cal.push(hand, lastConf, now));   // only fresh frames count
+    lastPose = mapper.update(lastHand, now);                                           // held frames keep the pose steady
 
     frames++;
     if (now - fpsT0 >= 1000) { fps = Math.round(frames * 1000 / (now - fpsT0)); frames = 0; fpsT0 = now; }
@@ -601,13 +1150,16 @@ function runTests(FB) {
 
   // ---------- Wiring ----------
   btn.addEventListener('click', function () { if (cameraState === 'camera-off' || cameraState === 'camera-error') startCamera(); else stopCamera(); });
+  btnRetry.addEventListener('click', loadModel);
   optMirror.addEventListener('change', function () { stage.classList.toggle('mirrored', optMirror.checked); });
   optOverlay.addEventListener('change', function () { if (!optOverlay.checked) ctx.clearRect(0, 0, canvas.width, canvas.height); });
   window.addEventListener('pagehide', function () { camToken++; releaseStream(); });
 
+  applySettings();
   renderTelemetry();
-  initModel();
+  loadModel();
 })();
+
 </script>
 </body>
 </html>
