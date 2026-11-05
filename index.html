@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fingerbot Studio - Milestone 2.1</title>
+<style>
+  :root {
+    --bg: #0f1420; --panel: #171d2b; --line: #263049; --text: #e6ebf5; --dim: #8592ad;
+    --blue: #4f9cff; --green: #3ddc97; --amber: #f5b942; --red: #ff6b6b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+  h1 { font-size: 18px; letter-spacing: .12em; margin: 0; color: var(--blue); }
+  .sub { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-top: 2px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: 12px; color: var(--dim); }
+  .chip b { color: var(--text); font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 600; margin-left: 4px; }
+  .chip b.ok { color: var(--green); } .chip b.warn { color: var(--amber); } .chip b.bad { color: var(--red); }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 860px) { .grid { grid-template-columns: 1.15fr 1fr; } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .panel h2 { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+  .stage { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #000; border-radius: 10px; overflow: hidden; }
+  .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: fill; }
+  .stage.mirrored video, .stage.mirrored canvas { transform: scaleX(-1); }
+  .stage canvas { pointer-events: none; }
+  .stage-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 16px; color: var(--dim); font-size: 14px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 12px; }
+  button { background: var(--blue); color: #06101f; border: 0; border-radius: 8px; padding: 9px 18px; font-weight: 700; font-size: 14px; cursor: pointer; }
+  button.stop { background: var(--red); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  label { font-size: 13px; color: var(--dim); display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  #msg { margin-top: 10px; font-size: 13px; color: var(--red); min-height: 1.2em; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .card.idx { border-left: 4px solid var(--blue); } .card.mid { border-left: 4px solid var(--green); }
+  .card h3 { margin: 0 0 8px; font-size: 14px; }
+  .card.idx h3 { color: var(--blue); } .card.mid h3 { color: var(--green); }
+  .row { display: grid; grid-template-columns: 42px 56px 56px 1fr; gap: 8px; align-items: center; font-size: 13px; padding: 3px 0; }
+  .row.head { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .row .k { color: var(--dim); }
+  .v { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; }
+  .v2 { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--dim); }
+  .bar { height: 6px; background: #0c111b; border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; width: 0; background: currentColor; }
+  .card.idx .bar { color: var(--blue); } .card.mid .bar { color: var(--green); }
+  .kv { display: flex; justify-content: space-between; font-size: 13px; padding: 3px 0; border-top: 1px solid var(--line); margin-top: 4px; }
+  .kv span:first-child { color: var(--dim); }
+  details { font-size: 13px; color: var(--dim); }
+  details summary { cursor: pointer; color: var(--text); }
+  details pre { white-space: pre-wrap; font-size: 12px; line-height: 1.5; margin: 8px 0 0; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .t-ok { color: var(--green); } .t-bad { color: var(--red); }
+  footer { font-size: 12px; color: var(--dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>FINGERBOT STUDIO</h1>
+      <div class="sub">Milestone 2.1 &middot; Geometry &amp; telemetry</div>
+    </div>
+    <div class="chips" role="status" aria-live="polite">
+      <span class="chip">Camera<b id="c-camera">OFF</b></span>
+      <span class="chip">Tracking<b id="c-tracking">--</b></span>
+      <span class="chip">Model<b id="c-model">--</b></span>
+      <span class="chip">FPS<b id="c-fps">--</b></span>
+      <span class="chip">Inference<b id="c-ms">--</b></span>
+      <span class="chip">Confidence<b id="c-conf">--</b></span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="panel">
+      <h2>Camera / hand</h2>
+      <div class="stage mirrored" id="stage">
+        <video id="video" playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="stage-msg" id="stage-msg">Camera is off. Press Start camera. Video is processed in your browser and never uploaded.</div>
+      </div>
+      <div class="controls">
+        <button id="btn-camera">Start camera</button>
+        <label><input type="checkbox" id="opt-overlay" checked> Landmark overlay</label>
+        <label><input type="checkbox" id="opt-mirror" checked> Mirror view</label>
+      </div>
+      <div id="msg" role="alert"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Finger telemetry</h2>
+      <div id="cards"></div>
+      <details>
+        <summary>How to read these numbers</summary>
+        <pre>Joint angle: the angle at the joint between its two neighbouring points.
+  180° = straight finger, smaller = more bent.
+3D: uses MediaPipe world landmarks (real-world scale, includes depth).
+2D: flat image angle. It under-reads bending toward the camera,
+  so compare the two columns to see depth at work.
+MCP = knuckle (wrist, MCP, PIP). PIP = middle joint. DIP = near tip.
+Heading: direction of the MCP-to-tip line as you see it on screen.
+  0° = up, +90° = right, -90° = left, 180° = down.
+Tip: fingertip position relative to the wrist in palm lengths
+  (wrist to middle knuckle). x = right, y = up, as you see it.
+  Hand size and camera distance cancel out.
+Mirror view only changes the picture and the signs of heading and
+Tip x. It never changes joint angles.</pre>
+      </details>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Geometry self-test</h2>
+    <div id="tests-summary" style="font-size:14px;font-weight:700">Running...</div>
+    <details style="margin-top:8px"><summary>Show each test</summary><pre id="tests-detail"></pre></details>
+  </section>
+
+  <footer>Next: Milestone 3 (calibration and motion mapping). Robot viewport arrives in Milestone 4.</footer>
+</div>
+
+<!-- ============================ GEOMETRY ============================ -->
+<script id="fb-geometry">
+/*
+ * Pure math. No camera, no DOM. Safe to unit-test on its own.
+ *
+ * Conventions
+ *  - Input landmarks are MediaPipe normalized: x,y in [0,1] of the camera frame,
+ *    y grows DOWN, z is a relative depth (same scale as x).
+ *  - Raw camera frame is used internally. Mirroring is a display choice only.
+ *  - Angles are radians internally, [0, PI]. Degrees only for display.
+ *  - A bad or degenerate measurement returns null, never 0.
+ */
+var FB = (function () {
+  'use strict';
+  var RAD2DEG = 180 / Math.PI;
+  var JOINTS = {
+    wrist: 0,
+    index:  { mcp: 5, pip: 6,  dip: 7,  tip: 8  },
+    middle: { mcp: 9, pip: 10, dip: 11, tip: 12 }
+  };
+
+  function isNum(v) { return typeof v === 'number' && isFinite(v); }
+  function isPt(p) { return !!p && isNum(p.x) && isNum(p.y); }
+  function zOf(p) { return isNum(p.z) ? p.z : 0; }
+
+  function angleBetween(a, b, c, use3D) {
+    if (!isPt(a) || !isPt(b) || !isPt(c)) return null;
+    var bax = a.x - b.x, bay = a.y - b.y, baz = use3D ? zOf(a) - zOf(b) : 0;
+    var bcx = c.x - b.x, bcy = c.y - b.y, bcz = use3D ? zOf(c) - zOf(b) : 0;
+    var mba = Math.sqrt(bax * bax + bay * bay + baz * baz);
+    var mbc = Math.sqrt(bcx * bcx + bcy * bcy + bcz * bcz);
+    if (!(mba > 1e-9) || !(mbc > 1e-9)) return null;
+    var cos = (bax * bcx + bay * bcy + baz * bcz) / (mba * mbc);
+    return Math.acos(Math.max(-1, Math.min(1, cos)));
+  }
+  function angleAt(a, b, c) { return angleBetween(a, b, c, true); }
+  function angleAt2D(a, b, c) { return angleBetween(a, b, c, false); }
+  function flexion(angle) { return isNum(angle) ? Math.PI - angle : null; }
+
+  // Normalized -> pixel-shaped space, so one unit of x equals one unit of y.
+  function toPixelSpace(p, W, H) {
+    if (!isPt(p)) return null;
+    return { x: p.x * W, y: p.y * H, z: zOf(p) * W };
+  }
+
+  // Degrees clockwise from "up" on screen. 0 up, 90 right, 180 down.
+  function headingDeg(from, to, mirror) {
+    if (!isPt(from) || !isPt(to)) return null;
+    var dx = to.x - from.x, dy = to.y - from.y;
+    if (Math.hypot(dx, dy) < 1e-9) return null;
+    var deg = Math.atan2(dx, -dy) * RAD2DEG;
+    return (mirror ? -deg : deg) + 0; // "+ 0" turns -0 into 0
+  }
+
+  function extractFinger(img, world, j, W, H, wristPx, palm, mirror, useWorld) {
+    var ids = [JOINTS.wrist, j.mcp, j.pip, j.dip, j.tip];
+    var px = [], k;
+    for (k = 0; k < ids.length; k++) {
+      var p = toPixelSpace(img[ids[k]], W, H);
+      if (!p) return null;
+      px.push(p);
+    }
+    var src = px;
+    if (useWorld) { src = []; for (k = 0; k < ids.length; k++) src.push(world[ids[k]]); }
+
+    function joint(i) {
+      var a3 = angleAt(src[i - 1], src[i], src[i + 1]);
+      var a2 = angleAt2D(px[i - 1], px[i], px[i + 1]);
+      if (a3 === null || a2 === null) return null;
+      return { angle: a3, angle2D: a2, flex: Math.PI - a3 };
+    }
+    var mcp = joint(1), pip = joint(2), dip = joint(3);
+    if (!mcp || !pip || !dip) return null;
+
+    var tip = px[4];
+    var dx = tip.x - wristPx.x, dy = tip.y - wristPx.y;
+    return {
+      mcp: mcp, pip: pip, dip: dip,
+      heading: headingDeg(px[1], px[4], mirror),
+      tip: { x: (mirror ? -dx : dx) / palm, y: -dy / palm }
+    };
+  }
+
+  // Returns null unless every landmark we need is present and finite.
+  function extractHand(landmarks, worldLandmarks, W, H, mirror) {
+    if (!landmarks || !isNum(W) || !isNum(H) || W <= 0 || H <= 0) return null;
+    var wristPx = toPixelSpace(landmarks[JOINTS.wrist], W, H);
+    var midMcpPx = toPixelSpace(landmarks[JOINTS.middle.mcp], W, H);
+    if (!wristPx || !midMcpPx) return null;
+    var palm = Math.hypot(midMcpPx.x - wristPx.x, midMcpPx.y - wristPx.y);
+    if (!(palm > 1e-6)) return null;
+
+    var needed = [0, 5, 6, 7, 8, 9, 10, 11, 12], useWorld = !!worldLandmarks, i;
+    if (useWorld) for (i = 0; i < needed.length; i++) if (!isPt(worldLandmarks[needed[i]])) { useWorld = false; break; }
+
+    var index = extractFinger(landmarks, worldLandmarks, JOINTS.index, W, H, wristPx, palm, !!mirror, useWorld);
+    var middle = extractFinger(landmarks, worldLandmarks, JOINTS.middle, W, H, wristPx, palm, !!mirror, useWorld);
+    if (!index || !middle) return null;
+    return { source: useWorld ? 'world' : 'image', palm: palm, index: index, middle: middle };
+  }
+
+  return { RAD2DEG: RAD2DEG, JOINTS: JOINTS, angleAt: angleAt, angleAt2D: angleAt2D, flexion: flexion,
+           toPixelSpace: toPixelSpace, headingDeg: headingDeg, extractHand: extractHand };
+})();
+</script>
+
+<!-- ============================== TESTS ============================== -->
+<script id="fb-tests">
+/* Returns [{name, ok, detail}]. Runs in the page and in Node (same code). */
+function runTests(FB) {
+  var out = [];
+  function approx(a, b, tol) { return typeof a === 'number' && Math.abs(a - b) <= (tol === undefined ? 1e-6 : tol); }
+  function t(name, fn) {
+    try { var r = fn(); out.push({ name: name, ok: r === true, detail: r === true ? '' : String(r) }); }
+    catch (e) { out.push({ name: name, ok: false, detail: 'threw: ' + e.message }); }
+  }
+  var D = FB.RAD2DEG;
+  function makeHand() {
+    var lm = [], i;
+    for (i = 0; i < 21; i++) lm.push({ x: 0.5, y: 0.5, z: 0 });
+    function set(n, x, y, z) { lm[n] = { x: x, y: y, z: z || 0 }; }
+    lm[0] = { x: 0.5, y: 0.9, z: 0 };
+    set(5, 0.45, 0.6); set(6, 0.45, 0.5); set(7, 0.45, 0.4); set(8, 0.45, 0.3);
+    set(9, 0.55, 0.6); set(10, 0.55, 0.5); set(11, 0.55, 0.4); set(12, 0.55, 0.3);
+    return lm;
+  }
+
+  t('straight line = 180 deg', function () {
+    var a = FB.angleAt({x:0,y:0}, {x:1,y:0}, {x:2,y:0}) * D; return approx(a, 180, 1e-6) || a;
+  });
+  t('right angle = 90 deg', function () {
+    var a = FB.angleAt({x:1,y:0}, {x:0,y:0}, {x:0,y:1}) * D; return approx(a, 90, 1e-6) || a;
+  });
+  t('45 deg corner', function () {
+    var a = FB.angleAt({x:1,y:0}, {x:0,y:0}, {x:1,y:1}) * D; return approx(a, 45, 1e-6) || a;
+  });
+  t('degenerate (two points equal) = null, not 0', function () {
+    var r = FB.angleAt({x:0,y:0}, {x:0,y:0}, {x:1,y:1}); return r === null || r;
+  });
+  t('missing or NaN point = null', function () {
+    var r1 = FB.angleAt(null, {x:0,y:0}, {x:1,y:1});
+    var r2 = FB.angleAt({x:NaN,y:0}, {x:0,y:0}, {x:1,y:1});
+    return (r1 === null && r2 === null) || [r1, r2];
+  });
+  t('order of end points does not matter', function () {
+    var a = FB.angleAt({x:1,y:0.2}, {x:0,y:0}, {x:0.3,y:1});
+    var b = FB.angleAt({x:0.3,y:1}, {x:0,y:0}, {x:1,y:0.2}); return approx(a, b, 1e-12) || [a, b];
+  });
+  t('rounding noise cannot produce NaN', function () {
+    var a = FB.angleAt({x:0.1,y:0.1}, {x:0.2,y:0.2}, {x:0.3,y:0.3});
+    return (isFinite(a) && approx(a * D, 180, 1e-4)) || a;
+  });
+  t('scale does not change the angle', function () {
+    var a = FB.angleAt({x:1,y:0.2,z:0.1}, {x:0,y:0,z:0}, {x:0.3,y:1,z:-0.4});
+    var b = FB.angleAt({x:3,y:0.6,z:0.3}, {x:0,y:0,z:0}, {x:0.9,y:3,z:-1.2}); return approx(a, b, 1e-9) || [a, b];
+  });
+  t('depth: 3D sees a bend that 2D cannot', function () {
+    var A = {x:0,y:0,z:0}, B = {x:10,y:0,z:0}, C = {x:20,y:0,z:10};
+    var a3 = FB.angleAt(A, B, C) * D, a2 = FB.angleAt2D(A, B, C) * D;
+    return (approx(a3, 135, 1e-6) && approx(a2, 180, 1e-6)) || [a3, a2];
+  });
+  t('flexion = 180 - angle (straight = 0)', function () {
+    var f = FB.flexion(Math.PI) , g = FB.flexion(Math.PI / 2) * D;
+    return (approx(f, 0, 1e-12) && approx(g, 90, 1e-9) && FB.flexion(null) === null) || [f, g];
+  });
+  t('aspect ratio: pixel space fixes the skew of raw 0-1 coordinates', function () {
+    var W = 640, H = 480;
+    var raw = [[300,200],[340,240],[380,200]].map(function (p) { return { x: p[0] / W, y: p[1] / H }; });
+    var naive = FB.angleAt2D(raw[0], raw[1], raw[2]) * D;
+    var fixed = FB.angleAt2D(FB.toPixelSpace(raw[0],W,H), FB.toPixelSpace(raw[1],W,H), FB.toPixelSpace(raw[2],W,H)) * D;
+    return (Math.abs(naive - 90) > 10 && approx(fixed, 90, 1e-6)) || [naive, fixed];
+  });
+  t('heading: up 0, right 90, down 180; mirror flips sign', function () {
+    var o = {x:0,y:0};
+    var up = FB.headingDeg(o, {x:0,y:-1}), right = FB.headingDeg(o, {x:1,y:0}), down = FB.headingDeg(o, {x:0,y:1});
+    var mr = FB.headingDeg(o, {x:1,y:0}, true), mu = FB.headingDeg(o, {x:0,y:-1}, true);
+    var okv = approx(up,0) && approx(right,90) && approx(down,180) && approx(mr,-90) && Object.is(mu, 0);
+    return okv || [up, right, down, mr, mu];
+  });
+  t('heading of zero-length segment = null', function () { return FB.headingDeg({x:1,y:1}, {x:1,y:1}) === null; });
+
+  t('straight synthetic hand: PIP and DIP read 180 deg', function () {
+    var h = FB.extractHand(makeHand(), null, 640, 480, false);
+    if (!h) return 'null hand';
+    var v = [h.index.pip.angle, h.index.dip.angle, h.middle.pip.angle, h.middle.dip.angle].map(function (x) { return x * D; });
+    return v.every(function (x) { return approx(x, 180, 1e-6); }) || v;
+  });
+  t('bending only the middle finger leaves the index finger untouched', function () {
+    var a = makeHand(), b = makeHand();
+    b[11] = { x: 0.65, y: 0.5, z: 0 }; b[12] = { x: 0.7, y: 0.6, z: 0 };
+    var ha = FB.extractHand(a, null, 640, 480, false), hb = FB.extractHand(b, null, 640, 480, false);
+    var same = JSON.stringify(ha.index) === JSON.stringify(hb.index);
+    var changed = hb.middle.pip.angle * D < 170 || hb.middle.dip.angle * D < 170;
+    return (same && changed) || { same: same, changed: changed };
+  });
+  t('mirroring the image does not change joint angles', function () {
+    var a = makeHand(); a[7] = {x:0.52,y:0.42,z:0}; a[8] = {x:0.6,y:0.38,z:0};
+    var b = a.map(function (p) { return { x: 1 - p.x, y: p.y, z: p.z }; });
+    var ha = FB.extractHand(a, null, 640, 480, false), hb = FB.extractHand(b, null, 640, 480, false);
+    return (approx(ha.index.pip.angle, hb.index.pip.angle, 1e-9) && approx(ha.index.dip.angle, hb.index.dip.angle, 1e-9)) || [ha.index.dip.angle, hb.index.dip.angle];
+  });
+  t('tip position is independent of hand size', function () {
+    var a = makeHand(), w = a[0];
+    var b = a.map(function (p) { return { x: w.x + (p.x - w.x) * 0.6, y: w.y + (p.y - w.y) * 0.6, z: 0 }; });
+    var ha = FB.extractHand(a, null, 640, 640, false), hb = FB.extractHand(b, null, 640, 640, false);
+    return (approx(ha.index.tip.x, hb.index.tip.x, 1e-9) && approx(ha.index.tip.y, hb.index.tip.y, 1e-9)) || [ha.index.tip, hb.index.tip];
+  });
+  t('missing or non-finite landmark -> whole hand is null', function () {
+    var a = makeHand(); a[10] = { x: NaN, y: 0.5, z: 0 };
+    var b = makeHand(); b[8] = null;
+    return (FB.extractHand(a, null, 640, 480) === null && FB.extractHand(b, null, 640, 480) === null) || 'not null';
+  });
+  t('bad frame size -> null', function () { return FB.extractHand(makeHand(), null, 0, 480) === null; });
+  t('world landmarks are used when complete, image fallback otherwise', function () {
+    var w = makeHand().map(function (p) { return { x: p.x * 0.2, y: p.y * 0.2, z: 0 }; });
+    var withW = FB.extractHand(makeHand(), w, 640, 480), broken = w.slice(); broken[6] = null;
+    var noW = FB.extractHand(makeHand(), broken, 640, 480);
+    return (withW.source === 'world' && noW.source === 'image') || [withW.source, noW.source];
+  });
+  return out;
+}
+</script>
+
+<!-- ============================ MEDIAPIPE LOAD ============================ -->
+<script id="fb-mediapipe-loader">
+  // Config: pinned MediaPipe version. Change here only.
+  var FB_MP_VERSION = '0.10.3';
+  window.fbMpReady = new Promise(function (resolve, reject) {
+    import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + FB_MP_VERSION + '/vision_bundle.js')
+      .then(function (m) { resolve({ HandLandmarker: m.HandLandmarker, FilesetResolver: m.FilesetResolver }); })
+      .catch(function (e) { reject(new Error('Could not load MediaPipe from the CDN (' + (e && e.message ? e.message : e) + '). Check your internet connection.')); });
+  });
+  window.fbMpReady.catch(function () {}); // the app reads the error itself; avoids an "unhandled" console warning
+</script>
+
+<!-- ================================ APP ================================ -->
+<script id="fb-app">
+(function () {
+  'use strict';
+
+  // ---------- Config (edit here) ----------
+  var WASM_URL  = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + window.FB_MP_VERSION + '/wasm';
+  var MODEL_URL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+  var HOLD_MS = 250;            // keep last reading this long after the hand vanishes (prevents flicker)
+  var UI_MS = 100;              // telemetry refresh interval (tracking itself runs per camera frame)
+  var MODEL_TIMEOUT_MS = 30000; // give up loading the model after this long
+  var BAR_MAX_FLEX_DEG = 110;   // full gauge = this much bend
+  var CONNECTIONS = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],
+                     [9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+
+  // ---------- Elements ----------
+  function $(id) { return document.getElementById(id); }
+  var video = $('video'), canvas = $('overlay'), ctx = canvas.getContext('2d'), stage = $('stage');
+  var stageMsg = $('stage-msg'), msgEl = $('msg'), btn = $('btn-camera');
+  var optOverlay = $('opt-overlay'), optMirror = $('opt-mirror');
+
+  // ---------- Self-tests ----------
+  (function showTests() {
+    var res = runTests(FB), pass = res.filter(function (r) { return r.ok; }).length;
+    var s = $('tests-summary');
+    s.textContent = pass + ' / ' + res.length + ' tests passed';
+    s.className = pass === res.length ? 't-ok' : 't-bad';
+    $('tests-detail').textContent = res.map(function (r) { return (r.ok ? 'PASS  ' : 'FAIL  ') + r.name + (r.ok ? '' : '  -> ' + r.detail); }).join('\n');
+    if (pass !== res.length) console.error('Geometry tests failed', res.filter(function (r) { return !r.ok; }));
+  })();
+
+  // ---------- Telemetry cards ----------
+  var JN = [['pip', 'PIP'], ['dip', 'DIP'], ['mcp', 'MCP']];
+  function cardHTML(key, label, cls) {
+    var rows = JN.map(function (j) {
+      var bar = j[0] === 'mcp' ? '' : '<div class="bar"><i id="' + key + '-' + j[0] + '-bar"></i></div>';
+      return '<div class="row"><span class="k">' + j[1] + '</span><span class="v" id="' + key + '-' + j[0] + '">--</span>' +
+             '<span class="v2" id="' + key + '-' + j[0] + '-2d">--</span>' + bar + '</div>';
+    }).join('');
+    return '<div class="card ' + cls + '"><h3>' + label + '</h3>' +
+      '<div class="row head"><span></span><span>3D</span><span>2D</span><span>Bend</span></div>' + rows +
+      '<div class="kv"><span>Heading</span><span class="v" id="' + key + '-head">--</span></div>' +
+      '<div class="kv"><span>Tip (x, y)</span><span class="v" id="' + key + '-tip">--</span></div></div>';
+  }
+  $('cards').innerHTML = cardHTML('idx', 'Index finger', 'idx') + cardHTML('mid', 'Middle finger', 'mid');
+
+  var els = {};
+  function el(id) { return els[id] || (els[id] = $(id)); }
+  function text(id, s) { var e = el(id); if (e.textContent !== s) e.textContent = s; }
+  function deg(rad) { return Math.round(rad * FB.RAD2DEG) + '°'; }
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function renderFinger(key, f) {
+    JN.forEach(function (j) {
+      var n = j[0], d = f && f[n];
+      text(key + '-' + n, d ? deg(d.angle) : '--');
+      text(key + '-' + n + '-2d', d ? deg(d.angle2D) : '--');
+      var bar = $(key + '-' + n + '-bar');
+      if (bar) bar.style.width = d ? Math.round(clamp(d.flex * FB.RAD2DEG / BAR_MAX_FLEX_DEG, 0, 1) * 100) + '%' : '0%';
+    });
+    text(key + '-head', f && f.heading !== null ? Math.round(f.heading) + '°' : '--');
+    text(key + '-tip', f ? f.tip.x.toFixed(2) + ', ' + f.tip.y.toFixed(2) : '--');
+  }
+
+  // ---------- State ----------
+  var cameraState = 'camera-off';   // camera-off | camera-starting | camera-ready | camera-error
+  var trackingState = 'loading-model'; // loading-model | idle | tracking | hand-not-detected | tracking-error
+  var delegateUsed = '--';
+  var lastHand = null, lastSeen = 0, lastConf = null;
+  var fps = 0, infMs = 0, frames = 0, fpsT0 = performance.now();
+  var landmarker = null, rafId = 0, lastVideoTime = -1, lastTs = 0, lastUi = 0;
+  var stream = null, camToken = 0;
+
+  function chip(id, label, cls) { var e = $(id); e.textContent = label; e.className = cls || ''; }
+  function renderChips() {
+    var c = { 'camera-off': ['OFF', ''], 'camera-starting': ['STARTING', 'warn'], 'camera-ready': ['READY', 'ok'], 'camera-error': ['ERROR', 'bad'] }[cameraState];
+    chip('c-camera', c[0], c[1]);
+    var t = { 'loading-model': ['LOADING MODEL', 'warn'], 'idle': ['IDLE', ''], 'tracking': ['TRACKING', 'ok'],
+              'hand-not-detected': ['NO HAND', 'warn'], 'tracking-error': ['ERROR', 'bad'] }[trackingState];
+    chip('c-tracking', t[0], t[1]);
+    chip('c-model', delegateUsed, delegateUsed === 'CPU' ? 'warn' : '');
+    chip('c-fps', cameraState === 'camera-ready' && fps > 0 ? String(fps) : '--');
+    chip('c-ms', cameraState === 'camera-ready' && infMs > 0 ? infMs.toFixed(1) + ' ms' : '--');
+    chip('c-conf', trackingState === 'tracking' && lastConf !== null ? Math.round(lastConf * 100) + '%' : '--');
+    btn.textContent = { 'camera-off': 'Start camera', 'camera-error': 'Start camera', 'camera-starting': 'Cancel', 'camera-ready': 'Stop camera' }[cameraState];
+    btn.className = cameraState === 'camera-ready' || cameraState === 'camera-starting' ? 'stop' : '';
+  }
+  function renderTelemetry() {
+    renderFinger('idx', lastHand && lastHand.index);
+    renderFinger('mid', lastHand && lastHand.middle);
+    renderChips();
+  }
+  function setCamera(s) { cameraState = s; renderChips(); }
+  function setTracking(s) { if (trackingState !== s) { trackingState = s; renderChips(); } }
+  function showError(m) { msgEl.textContent = m || ''; }
+
+  // ---------- Model ----------
+  function withTimeout(p, ms, message) {
+    return new Promise(function (resolve, reject) {
+      var id = setTimeout(function () { reject(new Error(message)); }, ms);
+      p.then(function (v) { clearTimeout(id); resolve(v); }, function (e) { clearTimeout(id); reject(e); });
+    });
+  }
+  function initModel() {
+    var work = (async function () {
+      var mp = await window.fbMpReady;
+      var fileset = await mp.FilesetResolver.forVisionTasks(WASM_URL);
+      function opts(delegate) { return { baseOptions: { modelAssetPath: MODEL_URL, delegate: delegate }, runningMode: 'VIDEO', numHands: 1 }; }
+      try {
+        landmarker = await mp.HandLandmarker.createFromOptions(fileset, opts('GPU'));
+        delegateUsed = 'GPU';
+      } catch (gpuErr) {
+        console.warn('GPU delegate failed, falling back to CPU:', gpuErr);
+        landmarker = await mp.HandLandmarker.createFromOptions(fileset, opts('CPU'));
+        delegateUsed = 'CPU';
+      }
+    })();
+    withTimeout(work, MODEL_TIMEOUT_MS, 'Loading the hand model took more than ' + (MODEL_TIMEOUT_MS / 1000) + ' s.')
+      .then(function () { setTracking('idle'); })
+      .catch(function (e) {
+        console.error(e);
+        trackingState = 'tracking-error'; delegateUsed = '--';
+        showError('Hand tracking could not start: ' + e.message + ' Reload the page to retry.');
+        renderChips();
+      });
+  }
+
+  // ---------- Camera ----------
+  function friendlyCameraError(e) {
+    var n = e && e.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError') return 'Camera permission was denied. Allow camera access in the browser address bar, then try again.';
+    if (n === 'NotFoundError' || n === 'OverconstrainedError') return 'No camera was found on this device.';
+    if (n === 'NotReadableError') return 'The camera is busy in another app or tab. Close it there and try again.';
+    return 'Camera error: ' + (e && e.message ? e.message : e);
+  }
+  async function startCamera() {
+    if (cameraState === 'camera-starting' || cameraState === 'camera-ready') return;
+    showError('');
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCamera('camera-error'); showError('This browser cannot open a camera here. Use https:// or http://localhost.'); return;
+    }
+    var token = ++camToken;
+    setCamera('camera-starting'); stageMsg.textContent = 'Requesting camera access...'; stageMsg.style.display = 'flex';
+    try {
+      var s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+      if (token !== camToken) { s.getTracks().forEach(function (t) { t.stop(); }); return; } // cancelled while waiting
+      stream = s;
+      video.srcObject = s;
+      if (video.readyState < 1) await new Promise(function (r) { video.addEventListener('loadedmetadata', r, { once: true }); });
+      await video.play();
+      if (token !== camToken) return;
+      var vw = video.videoWidth, vh = video.videoHeight;
+      canvas.width = vw; canvas.height = vh;                 // canvas = camera pixels, so overlay lines up exactly
+      stage.style.aspectRatio = vw + ' / ' + vh;
+      stageMsg.style.display = 'none';
+      lastVideoTime = -1; lastSeen = 0; lastHand = null; frames = 0; fpsT0 = performance.now();
+      setCamera('camera-ready');
+      if (trackingState === 'idle') setTracking('hand-not-detected');
+      rafId = requestAnimationFrame(loop);
+    } catch (e) {
+      if (token !== camToken) return;
+      releaseStream(); setCamera('camera-error');
+      stageMsg.textContent = 'Camera unavailable.'; stageMsg.style.display = 'flex';
+      showError(friendlyCameraError(e));
+    }
+  }
+  function releaseStream() {
+    if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
+    video.srcObject = null;
+  }
+  function stopCamera() {
+    camToken++;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+    releaseStream();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    lastHand = null; lastConf = null; fps = 0; infMs = 0;
+    stageMsg.textContent = 'Camera is off. Press Start camera.'; stageMsg.style.display = 'flex';
+    if (trackingState !== 'tracking-error' && trackingState !== 'loading-model') trackingState = 'idle';
+    setCamera('camera-off');
+    renderTelemetry();
+  }
+
+  // ---------- Drawing ----------
+  function drawChain(lm, ids, color, s) {
+    var W = canvas.width, H = canvas.height, k;
+    ctx.strokeStyle = color; ctx.lineWidth = 4 * s; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (k = 0; k < ids.length; k++) { var p = lm[ids[k]]; if (k === 0) ctx.moveTo(p.x * W, p.y * H); else ctx.lineTo(p.x * W, p.y * H); }
+    ctx.stroke();
+    for (k = 1; k < ids.length; k++) {
+      var q = lm[ids[k]];
+      ctx.beginPath(); ctx.arc(q.x * W, q.y * H, (k === 4 ? 6 : 4.5) * s, 0, 6.2832); ctx.fillStyle = color; ctx.fill();
+    }
+    var pip = lm[ids[2]];                                     // ring marks the PIP joint we measure
+    ctx.beginPath(); ctx.arc(pip.x * W, pip.y * H, 9 * s, 0, 6.2832); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2 * s; ctx.stroke();
+  }
+  function draw(lm) {
+    var W = canvas.width, H = canvas.height, s = W / 640;
+    ctx.clearRect(0, 0, W, H);
+    if (!lm || !optOverlay.checked) return;
+    ctx.strokeStyle = 'rgba(210,220,240,.35)'; ctx.lineWidth = 2 * s;
+    ctx.beginPath();
+    CONNECTIONS.forEach(function (c) { var a = lm[c[0]], b = lm[c[1]]; ctx.moveTo(a.x * W, a.y * H); ctx.lineTo(b.x * W, b.y * H); });
+    ctx.stroke();
+    drawChain(lm, [0, 5, 6, 7, 8], '#4f9cff', s);
+    drawChain(lm, [0, 9, 10, 11, 12], '#3ddc97', s);
+    ctx.beginPath(); ctx.arc(lm[0].x * W, lm[0].y * H, 6 * s, 0, 6.2832); ctx.fillStyle = '#f5b942'; ctx.fill();
+  }
+
+  // ---------- Tracking loop (single loop, one inference per new camera frame) ----------
+  function loop() {
+    rafId = requestAnimationFrame(loop);
+    if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
+    lastVideoTime = video.currentTime;
+
+    var ts = performance.now(); if (ts <= lastTs) ts = lastTs + 1; lastTs = ts; // MediaPipe needs increasing timestamps
+    var res;
+    try { res = landmarker.detectForVideo(video, ts); }
+    catch (e) {
+      console.error(e); stopCamera();
+      trackingState = 'tracking-error'; renderChips();
+      showError('Hand tracking failed: ' + e.message + ' Press Start camera to retry.'); return;
+    }
+    var now = performance.now();
+    infMs = infMs === 0 ? now - ts : infMs * 0.9 + (now - ts) * 0.1;
+
+    var lm = res.landmarks && res.landmarks[0];
+    var wl = res.worldLandmarks && res.worldLandmarks[0];
+    var hd = res.handednesses || res.handedness;
+    lastConf = hd && hd[0] && hd[0][0] && typeof hd[0][0].score === 'number' ? hd[0][0].score : null;
+    var hand = lm ? FB.extractHand(lm, wl, video.videoWidth, video.videoHeight, optMirror.checked) : null;
+
+    if (hand) {
+      lastHand = hand; lastSeen = now; setTracking('tracking'); draw(lm);
+    } else if (lastHand && now - lastSeen <= HOLD_MS) {
+      // brief dropout: keep showing the last reading instead of flickering
+    } else {
+      lastHand = null; setTracking('hand-not-detected'); draw(null);
+    }
+
+    frames++;
+    if (now - fpsT0 >= 1000) { fps = Math.round(frames * 1000 / (now - fpsT0)); frames = 0; fpsT0 = now; }
+    if (now - lastUi >= UI_MS) { lastUi = now; renderTelemetry(); }
+  }
+
+  // ---------- Wiring ----------
+  btn.addEventListener('click', function () { if (cameraState === 'camera-off' || cameraState === 'camera-error') startCamera(); else stopCamera(); });
+  optMirror.addEventListener('change', function () { stage.classList.toggle('mirrored', optMirror.checked); });
+  optOverlay.addEventListener('change', function () { if (!optOverlay.checked) ctx.clearRect(0, 0, canvas.width, canvas.height); });
+  window.addEventListener('pagehide', function () { camToken++; releaseStream(); });
+
+  renderTelemetry();
+  initModel();
+})();
+</script>
+</body>
+</html>
